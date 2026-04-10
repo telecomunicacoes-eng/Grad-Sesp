@@ -1,0 +1,10 @@
+# Chave privada do Firebase — NUNCA subir no GitHub
+serviceAccountKey.json
+serviceAccountKey.json.json
+
+# Dependências Node.js
+node_modules/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
