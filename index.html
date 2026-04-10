@@ -2453,7 +2453,9 @@ function removeSite(sbs){
 }
 
 // ════ IMPORT / EXPORT ════
-function parseCSVLine(line){
+function parseCSVLine(line, sep){
+  // Se separador for tab, split simples (tabs não aparecem dentro de campos)
+  if(sep==='\t') return line.split('\t').map(c=>c.replace(/^"|"$/g,'').trim());
   const result=[];let cur='';let inQ=false;
   for(let i=0;i<line.length;i++){
     const c=line[i];
@@ -2474,8 +2476,8 @@ function importCSV(input){
     if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
     const lines=text.split(/\r?\n/).filter(l=>l.trim());
     if(lines.length<2){ document.getElementById('import-feedback').textContent='⚠ Arquivo vazio ou sem dados.'; return; }
-    // Detectar separador: vírgula ou ponto-e-vírgula
-    const sep=lines[0].includes(';')?';':',';
+    // Detectar separador: tab, ponto-e-vírgula ou vírgula
+    const sep=lines[0].includes('\t')?'\t':lines[0].includes(';')?';':',';
     const rawHeader=lines[0].split(sep).map(h=>h.trim().toLowerCase().replace(/['"]/g,'').replace(/[^a-z0-9]/g,'_'));
     // Mapear nomes flexíveis de colunas
     const colMap={
@@ -2492,7 +2494,7 @@ function importCSV(input){
     let added=0,skipped=0,erros=[];
     for(let i=1;i<lines.length;i++){
       if(!lines[i].trim()) continue;
-      const cols=parseCSVLine(lines[i]).map(c=>c.replace(/^"|"$/g,'').trim());
+      const cols=parseCSVLine(lines[i], sep).map(c=>c.replace(/^"|"$/g,'').trim());
       const get=key=>colMap[key]>=0?cols[colMap[key]]||'':'';
       const sbs=parseInt(get('sbs'));
       if(!sbs){ skipped++; erros.push(`Linha ${i+1}: SBS inválido`); continue; }
@@ -2988,9 +2990,7 @@ let mapActiveRisps = new Set();
 let mapSearchTerm = '';
 let mapInitialized = false;
 
-let mapRispList = [...new Set(getERBData().map(e => e.risp))].sort((a,b)=>{
-  return parseInt(a.replace('RISP ','')) - parseInt(b.replace('RISP ',''));
-});
+let mapRispList = []; // preenchido por mapFullRebuild após RISPS carregar do Firestore
 
 function mapMakeIcon(status, selected=false) {
   const color = MAP_STATUS_COLORS[status] || MAP_STATUS_COLORS.operando;
@@ -3320,8 +3320,9 @@ function mapFullRebuild() {
   mapActiveStatuses = new Set(['operando','inoperante','parcial','instavel','fallback','inativo']);
   mapActiveRisps = new Set();
   mapSearchTerm = '';
-  // Reconstruir o mapRispList
-  const newRispList = [...new Set(getERBData().map(e => e.risp))].sort((a,b)=>{
+  // Reconstruir o mapRispList a partir da lista configurada (RISPS)
+  const sourceRisps = RISPS.length > 0 ? RISPS : [...new Set(getERBData().map(e => e.risp).filter(Boolean))];
+  const newRispList = [...new Set(sourceRisps)].sort((a,b)=>{
     return parseInt(a.replace('RISP ','')) - parseInt(b.replace('RISP ',''));
   });
   mapRispList.length = 0;
