@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRAD — Controle de Produtividade 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+#leaflet-map{height:300px;border-radius:6px;z-index:1;}
+@keyframes mapPulse{0%{transform:scale(1);opacity:.7;}70%{transform:scale(2.2);opacity:0;}100%{transform:scale(2.2);opacity:0;}}
+.leaflet-popup-content-wrapper{background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.6);}
+.leaflet-popup-tip{background:#161b22;}
+.leaflet-popup-content{margin:10px 14px;font-family:'Segoe UI',sans-serif;font-size:12px;}
+.map-pop-title{font-weight:700;font-size:13px;margin-bottom:6px;color:#58a6ff;}
+.map-pop-row{display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid #21262d;font-size:11px;}
+.map-pop-row:last-child{border:none;}
+.map-pop-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.map-sidebar{position:absolute;top:0;left:0;width:220px;height:100%;background:#0d1117cc;backdrop-filter:blur(4px);border-right:1px solid #30363d;overflow-y:auto;z-index:10;border-radius:6px 0 0 6px;}
+.map-sidebar-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #21262d;cursor:pointer;font-size:11px;color:#c9d1d9;transition:background .15s;}
+.map-sidebar-item:hover{background:#21262d;}
+.map-sidebar-item.active-city{background:#1f2d3d;color:#58a6ff;}
+.map-side-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.map-side-name{flex:1;line-height:1.3;}
+.map-side-count{font-size:10px;background:#21262d;border-radius:10px;padding:1px 6px;color:#8b949e;}
+.map-legend-box{position:absolute;bottom:8px;right:8px;background:#0d1117dd;border:1px solid #30363d;border-radius:6px;padding:8px 10px;z-index:20;font-size:10px;}
+.map-leg-item{display:flex;align-items:center;gap:5px;margin-bottom:4px;}
+.map-leg-item:last-child{margin:0;}
+.map-leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.map-counters{position:absolute;bottom:8px;left:228px;background:#0d1117dd;border:1px solid #30363d;border-radius:6px;padding:6px 10px;z-index:20;display:flex;gap:14px;}
+.mc-item{text-align:center;}
+.mc-val{font-size:16px;font-weight:700;line-height:1;}
+.mc-lbl{font-size:8px;color:#8b949e;text-transform:uppercase;}
+</style>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif;}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;--border2:#21262d;
+  --text:#e6edf3;--text2:#c9d1d9;--muted:#8b949e;
+  --blue:#58a6ff;--blue-bg:#1f2d3d;--blue-border:#388bfd33;--blue-dark:#1f6feb;
+  --green:#3fb950;--green-bg:#196c2e22;--green-border:#3fb95033;
+  --yellow:#d29910;--yellow-bg:#9e6a0322;--yellow-border:#d2991033;
+  --red:#f85149;--red-bg:#3b1f2b;--red-border:#f4706833;
+  --orange:#e3b341;--teal:#39c5cf;
+}
+body{background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;height:46px;background:var(--surface);border-bottom:1px solid var(--border);padding:0;position:sticky;top:0;z-index:100;}
+.tb-brand{display:flex;align-items:center;gap:9px;padding:0 18px;height:100%;border-right:1px solid var(--border);background:var(--surface2);}
+.tb-logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1f6feb,#388bfd);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
+.tb-title{font-weight:600;font-size:13px;color:var(--text);line-height:1.25;}
+.tb-sub{font-size:10px;color:var(--muted);}
+.tb-crumb{display:flex;align-items:center;gap:4px;padding:0 16px;font-size:11px;color:var(--muted);border-right:1px solid var(--border);height:100%;}
+.tb-crumb span{color:var(--blue);}
+.tb-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:12px;}
+.tb-badge{font-size:10px;font-weight:600;padding:3px 10px;border-radius:12px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.tb-right{display:flex;align-items:center;gap:10px;padding:0 16px;}
+.tb-live{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.tb-date{font-size:11px;color:var(--muted);}
+.tb-user{display:flex;align-items:center;gap:6px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;}
+.tb-avatar{width:22px;height:22px;border-radius:50%;background:var(--blue-dark);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+.tb-admin{font-size:10px;background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);border-radius:4px;padding:1px 6px;}
+
+/* ── LAYOUT ── */
+.layout{display:flex;min-height:calc(100vh - 46px);}
+
+/* ── SIDEBAR ── */
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);padding:10px 0;flex-shrink:0;position:sticky;top:46px;height:calc(100vh - 46px);overflow-y:auto;}
+.nav-sec{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px 4px;margin-top:6px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all .15s;position:relative;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--text);background:#1c2535;border-left-color:var(--blue-dark);}
+.nav-icon{font-size:15px;width:18px;text-align:center;}
+.nav-badge{margin-left:auto;font-size:10px;background:#da3633;color:#fff;border-radius:10px;padding:1px 7px;font-weight:600;}
+
+/* ── MAIN ── */
+.main{flex:1;padding:20px;overflow-x:auto;min-width:0;}
+
+/* ── VIEW ── */
+.view{display:none;}
+.view.active{display:block;}
+
+/* ── PAGE HEADER ── */
+.ph{margin-bottom:20px;}
+.ph-title{font-size:20px;font-weight:600;color:var(--text);}
+.ph-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.ph-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text);transition:all .15s;white-space:nowrap;}
+.btn:hover{background:var(--border);}
+.btn-primary{background:var(--blue-dark);border-color:var(--blue);color:#fff;}
+.btn-primary:hover{background:#388bfd;}
+.btn-success{background:var(--green-bg);border-color:var(--green-border);color:var(--green);}
+.btn-warning{background:var(--yellow-bg);border-color:var(--yellow-border);color:var(--yellow);}
+.btn-danger{background:var(--red-bg);border-color:var(--red-border);color:var(--red);}
+.btn-sm{padding:3px 8px;font-size:10px;}
+
+/* ── KPI CARDS ── */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;}
+.kpi{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:13px;text-align:center;border-top:2px solid transparent;}
+.kpi.k-blue{border-top-color:var(--blue-dark);}
+.kpi.k-green{border-top-color:var(--green);}
+.kpi.k-yellow{border-top-color:var(--yellow);}
+.kpi.k-red{border-top-color:var(--red);}
+.kpi.k-orange{border-top-color:var(--orange);}
+.kpi.k-teal{border-top-color:var(--teal);}
+.kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.kpi-val{font-size:26px;font-weight:700;line-height:1;}
+.kpi.k-blue .kpi-val{color:var(--blue);}
+.kpi.k-green .kpi-val{color:var(--green);}
+.kpi.k-yellow .kpi-val{color:var(--yellow);}
+.kpi.k-red .kpi-val{color:var(--red);}
+.kpi.k-orange .kpi-val{color:var(--orange);}
+.kpi.k-teal .kpi-val{color:var(--teal);}
+.kpi-sub{font-size:9px;color:var(--muted);margin-top:3px;}
+
+/* ── PANELS ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
+.panel{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:16px;}
+.panel-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.panel-title::before{content:'';display:inline-block;width:3px;height:11px;border-radius:2px;background:var(--blue-dark);}
+
+/* ── DONUT ── */
+.donut-wrap{display:flex;align-items:center;gap:16px;}
+.donut-canvas{position:relative;width:130px;height:130px;flex-shrink:0;}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.donut-num{font-size:22px;font-weight:700;color:var(--text);line-height:1;}
+.donut-pct{font-size:10px;color:var(--green);}
+.legend-list{display:flex;flex-direction:column;gap:7px;flex:1;}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:11px;}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.leg-label{color:var(--text2);flex:1;}
+.leg-val{font-weight:600;color:var(--text);}
+.leg-pct{color:var(--muted);font-size:10px;}
+
+/* ── BARS ── */
+.bar-item{margin-bottom:9px;}
+.bar-top{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px;}
+.bar-val{font-weight:600;color:var(--blue);}
+.bar-track{height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+
+/* ── MAP ── */
+.map-wrap{background:#0a1628;border:1px solid #1a3050;border-radius:6px;height:170px;position:relative;overflow:hidden;}
+.map-grid-svg{position:absolute;inset:0;opacity:.05;}
+.map-dot{position:absolute;border-radius:50%;border:2px solid;transition:transform .2s;}
+.map-dot:hover{transform:scale(1.5);z-index:10;}
+.map-lbl{position:absolute;font-size:8px;white-space:nowrap;margin-top:1px;}
+.map-legend{position:absolute;bottom:6px;left:8px;display:flex;gap:10px;}
+.map-leg{display:flex;align-items:center;gap:3px;font-size:8px;}
+
+/* ── ALERTS ── */
+.alert-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border2);}
+.alert-item:last-child{border-bottom:none;}
+.alert-ico{width:22px;height:22px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.ai-warn{background:var(--yellow-bg);color:var(--yellow);}
+.ai-info{background:var(--blue-bg);color:var(--blue);}
+.ai-ok{background:var(--green-bg);color:var(--green);}
+.ai-red{background:var(--red-bg);color:var(--red);}
+.alert-body{flex:1;}
+.alert-t{font-size:11px;color:var(--text2);line-height:1.4;}
+.alert-s{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* ── FILTERS ── */
+.filters{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 16px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.f-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
+.f-select,.f-input{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 9px;font-size:12px;height:30px;}
+.f-select:focus,.f-input:focus{outline:none;border-color:var(--blue-dark);}
+.f-input{min-width:200px;}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border2);border-radius:8px;overflow:hidden;}
+.table-bar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.table-bar-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
+.table-bar-count{font-size:11px;color:var(--blue);}
+.tbl-wrap{overflow-x:auto;}
+table.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+table.tbl thead{background:var(--surface2);}
+table.tbl th{padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.tbl td{padding:7px 10px;border-bottom:1px solid var(--border2);color:var(--text2);vertical-align:middle;}
+table.tbl tr:hover td{background:#1c2128;}
+table.tbl tr:last-child td{border-bottom:none;}
+.td-date{white-space:nowrap;color:var(--muted);font-size:11px;}
+.td-sig{font-size:10px;color:var(--blue);white-space:nowrap;}
+.td-desc{max-width:220px;font-size:11px;}
+.td-muted{font-size:11px;color:var(--muted);white-space:nowrap;}
+.td-actions{display:flex;gap:4px;}
+
+/* ── STATUS BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap;}
+.badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.b-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.b-green .badge-dot{background:var(--green);}
+.b-yellow{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border);}
+.b-yellow .badge-dot{background:var(--yellow);}
+.b-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.b-blue .badge-dot{background:var(--blue);}
+.b-red{background:var(--red-bg);color:#f47068;border:1px solid var(--red-border);}
+.b-red .badge-dot{background:#f47068;}
+.b-gray{background:#21262d;color:#8b949e;border:1px solid #30363d;}
+.b-gray .badge-dot{background:#8b949e;}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:15px;font-weight:600;color:var(--text);}
+.modal-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:20px;}
+.modal-ftr{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-row.full{grid-template-columns:1fr;}
+.form-row.three{grid-template-columns:1fr 1fr 1fr;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:11px;color:var(--muted);font-weight:500;}
+.fg input,.fg select,.fg textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:13px;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--blue-dark);}
+.fg textarea{resize:vertical;min-height:60px;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+
+/* ── PRINT ── */
+@media print{
+  .sidebar,.topbar,.ph-actions,.filters,.td-actions,.modal,.overlay,.btn{display:none!important;}
+  .layout{display:block;}
+  .main{padding:10px;}
+  body{background:#fff;color:#000;}
+  .panel,.table-wrap,.kpi{border:1px solid #ddd;background:#fff;}
+  .kpi-lbl,.panel-title{color:#555;}
+  .kpi-val{color:#000!important;}
+  .tbl th,.tbl td{color:#000;border-color:#ddd;}
+  .badge{border:1px solid #ccc;color:#000;}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .kpi-row{grid-template-columns:repeat(3,1fr);}
+  .grid3{grid-template-columns:1fr 1fr;}
+  .grid2{grid-template-columns:1fr;}
+}
+@media(max-width:640px){
+  .sidebar{display:none;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .tb-crumb,.tb-mid{display:none;}
+}
+
+/* ── TOOLTIP CARD ── */
+.tooltip-card{position:fixed;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;color:var(--text2);max-width:300px;z-index:200;pointer-events:none;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.tooltip-card.show{display:block;}
+
+/* ── TAB BUTTONS ── */
+.tabs{display:flex;gap:4px;margin-bottom:12px;}
+.tab-btn{font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;}
+.tab-btn.active{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border);}
+
+/* ── STAT ROW (detail) ── */
+.stat-inline{display:flex;align-items:baseline;gap:6px;}
+.stat-big{font-size:32px;font-weight:700;}
+.stat-unit{font-size:12px;color:var(--muted);}
+
+/* ── PROGRESS RING ── */
+.ring-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.ring-center{position:absolute;text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-brand">
+    <div class="tb-logo">GR</div>
+    <div>
+      <div class="tb-title">GRAD — Produtividade 2026</div>
+      <div class="tb-sub">SESP/MT · Gerência de Radiocomunicação</div>
+    </div>
+  </div>
+  <div class="tb-crumb">SESP/MT <span>›</span> CIOSP <span>›</span> <span>Controle de Produtividade</span></div>
+  <div class="tb-mid">
+    <span class="tb-badge">GRAD</span>
+    <span class="tb-badge">CIOSP</span>
+  </div>
+  <div class="tb-right">
+    <div class="tb-live"><div class="live-dot"></div>AO VIVO</div>
+    <div class="tb-date" id="tb-date">—</div>
+    <div class="tb-user">
+      <div class="tb-avatar">TE</div>
+      <span>telecomunicacoes</span>
+      <span class="tb-admin">ADMIN</span>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="nav-sec">Principal</div>
+  <div class="nav-item" id="nav-dashboard" onclick="showView('dashboard')"><span class="nav-icon">⊞</span> Dashboard</div>
+  <div class="nav-item active" id="nav-atividades" onclick="showView('atividades')"><span class="nav-icon">☰</span> Atividades</div>
+  <div class="nav-item" id="nav-pendentes" onclick="showView('pendentes')"><span class="nav-icon">◎</span> Pendentes <span class="nav-badge" id="nav-pend-badge">0</span></div>
+  <div class="nav-sec">Relatórios</div>
+  <div class="nav-item" id="nav-relatorio" onclick="showView('relatorio')"><span class="nav-icon">↑</span> Exportar / Imprimir</div>
+  <div class="nav-sec">Administração</div>
+  <div class="nav-item" id="nav-gerenciar" onclick="showView('gerenciar')"><span class="nav-icon">⚙</span> Gerenciar dados</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ════ VIEW: DASHBOARD ════ -->
+  <div class="view" id="view-dashboard">
+    <div class="ph">
+      <div class="ph-title">Dashboard — Controle de Produtividade 2026</div>
+      <div class="ph-sub">SESP/MT · CIOSP · Gerência de Radiocomunicação</div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="kpi-row">
+      <div class="kpi k-blue"><div class="kpi-lbl">Total</div><div class="kpi-val" id="kpi-total">0</div><div class="kpi-sub">atividades 2026</div></div>
+      <div class="kpi k-green"><div class="kpi-lbl">Concluído</div><div class="kpi-val" id="kpi-conc">0</div><div class="kpi-sub" id="kpi-conc-p">—</div></div>
+      <div class="kpi k-yellow"><div class="kpi-lbl">Pendente</div><div class="kpi-val" id="kpi-pend">0</div><div class="kpi-sub">aguardam ação</div></div>
+      <div class="kpi k-blue" style="border-top-color:var(--blue)"><div class="kpi-lbl">Aguardando</div><div class="kpi-val" id="kpi-agd">0</div><div class="kpi-sub">em espera</div></div>
+      <div class="kpi k-orange"><div class="kpi-lbl">Em andamento</div><div class="kpi-val" id="kpi-em">0</div><div class="kpi-sub">em execução</div></div>
+      <div class="kpi k-teal"><div class="kpi-lbl">Nº SIGADOCs</div><div class="kpi-val" id="kpi-sig">0</div><div class="kpi-sub">documentados</div></div>
+    </div>
+
+    <!-- ROW 1: Donut + Unidades + Tipos -->
+    <div class="grid3">
+      <div class="panel">
+        <div class="panel-title">Status geral</div>
+        <div class="donut-wrap">
+          <div class="donut-canvas">
+            <canvas id="donutChart" width="130" height="130"></canvas>
+            <div class="donut-center"><div class="donut-num" id="donut-n">0</div><div class="donut-pct" id="donut-p">0%</div></div>
+          </div>
+          <div class="legend-list" id="donut-legend"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Atendimentos por unidade</div>
+        <div id="bar-unidades"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Tipos de serviço</div>
+        <div id="bar-tipos"></div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Missões por mês + Mapa -->
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-title">Missões por mês — 2026</div>
+        <div style="position:relative;height:180px;">
+          <canvas id="barMesChart"></canvas>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block;"></span>Concluído</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:var(--yellow);display:inline-block;"></span>Pendente/Aguardando</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:var(--blue);display:inline-block;"></span>Em andamento</span>
+        </div>
+      </div>
+      <div class="panel" style="padding:12px;">
+        <div class="panel-title">Mapa de missões — Mato Grosso</div>
+        <div style="position:relative;">
+          <div id="leaflet-map"></div>
+          <!-- Legenda -->
+          <div class="map-legend-box">
+            <div class="map-leg-item"><div class="map-leg-dot" style="background:#3fb950;"></div><span style="color:#c9d1d9;">Concluído</span></div>
+            <div class="map-leg-item"><div class="map-leg-dot" style="background:#d29910;"></div><span style="color:#c9d1d9;">Pendente</span></div>
+            <div class="map-leg-item"><div class="map-leg-dot" style="background:#e3b341;"></div><span style="color:#c9d1d9;">Aguardando</span></div>
+            <div class="map-leg-item"><div class="map-leg-dot" style="background:#f47068;"></div><span style="color:#c9d1d9;">Em andamento</span></div>
+          </div>
+          <!-- Contadores -->
+          <div class="map-counters" id="map-counters"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Tabela resumo + Alertas + Tendência -->
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-title">Registros recentes</div>
+        <div class="tabs">
+          <button class="tab-btn" onclick="setTableFilter('all',this)">Todos</button>
+          <button class="tab-btn active" onclick="setTableFilter('pend',this)">Pendentes</button>
+          <button class="tab-btn" onclick="setTableFilter('conc',this)">Concluídos</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="tbl" style="font-size:11px;">
+            <thead><tr>
+              <th>Data</th><th>RISP / Unidade</th><th>Tipo</th><th>SIGADOC</th><th>Descrição da Atividade</th><th>Situação</th>
+            </tr></thead>
+            <tbody id="dash-tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Alertas e destaques</div>
+        <div id="alertas-list"></div>
+        <div style="margin-top:16px;">
+          <div class="panel-title">Tendência de execução mensal</div>
+          <div style="position:relative;height:100px;">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:10px;color:var(--muted);">Tempo médio de resolução:</span>
+          <span style="font-size:18px;font-weight:700;color:var(--blue);" id="avg-days">—</span>
+          <span style="font-size:10px;color:var(--muted);">dias</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ VIEW: ATIVIDADES ════ -->
+  <div class="view active" id="view-atividades">
+    <div class="ph">
+      <div class="ph-title">Controle de Produtividade 2026</div>
+      <div class="ph-sub">SESP/MT · CIOSP · Gerência de Radiocomunicação — <span id="total-label">0 registros</span></div>
+      <div class="ph-actions">
+        <button class="btn btn-primary" onclick="openModal()">+ Nova atividade</button>
+        <button class="btn btn-success" onclick="exportCSV()">↓ Exportar CSV</button>
+        <button class="btn" onclick="window.print()">⎙ Imprimir</button>
+        <button class="btn" onclick="showView('dashboard')">⊞ Ver dashboard</button>
+      </div>
+    </div>
+    <div class="filters">
+      <span class="f-label">Filtros:</span>
+      <select class="f-select" id="f-situacao" onchange="applyFilters()">
+        <option value="">Todas as situações</option>
+        <option value="Concluído">Concluído</option>
+        <option value="Pendente">Pendente</option>
+        <option value="Aguardando">Aguardando</option>
+        <option value="Em andamento">Em andamento</option>
+        <option value="Cancelado/Suspenso">Cancelado/Suspenso</option>
+      </select>
+      <select class="f-select" id="f-mes" onchange="applyFilters()">
+        <option value="">Todos os meses</option>
+        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+        <option value="03">Março</option><option value="04">Abril</option>
+        <option value="05">Maio</option><option value="06">Junho</option>
+        <option value="07">Julho</option><option value="08">Agosto</option>
+        <option value="09">Setembro</option><option value="10">Outubro</option>
+        <option value="11">Novembro</option><option value="12">Dezembro</option>
+      </select>
+      <select class="f-select" id="f-tipo-fil" onchange="applyFilters()">
+        <option value="">Todos os tipos</option>
+      </select>
+      <input class="f-input" type="text" id="f-busca" placeholder="Buscar por descrição, município, SIGADOC..." oninput="applyFilters()">
+      <button class="btn" onclick="clearFilters()">✕ Limpar</button>
+    </div>
+    <div class="table-wrap">
+      <div class="table-bar">
+        <span class="table-bar-title">Registros de atividades</span>
+        <span class="table-bar-count" id="showing-count">—</span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th onclick="sortBy('data')" style="cursor:pointer;">Data ↕</th>
+              <th>Tipo de Serviço</th>
+              <th>Nº SIGADOC / PRO</th>
+              <th>RISP / Unidade / Município</th>
+              <th>Descrição da Atividade</th>
+              <th onclick="sortBy('ini')" style="cursor:pointer;">Início ↕</th>
+              <th>Término</th>
+              <th>Situação</th>
+              <th>Obs.</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ VIEW: PENDENTES ════ -->
+  <div class="view" id="view-pendentes">
+    <div class="ph">
+      <div class="ph-title">Atividades pendentes</div>
+      <div class="ph-sub">Registros com situação Pendente ou Aguardando</div>
+      <div class="ph-actions">
+        <button class="btn btn-primary" onclick="openModal()">+ Nova atividade</button>
+        <button class="btn btn-success" onclick="exportPendentesCSV()">↓ Exportar pendentes CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-bar">
+        <span class="table-bar-title">Pendências abertas</span>
+        <span class="table-bar-count" id="pend-count">—</span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Data</th><th>Tipo de Serviço</th><th>Nº SIGADOC</th><th>RISP / Município</th><th>Descrição</th><th>Início</th><th>Situação</th><th>Ações</th></tr></thead>
+          <tbody id="pend-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ VIEW: RELATÓRIO ════ -->
+  <div class="view" id="view-relatorio">
+    <div class="ph">
+      <div class="ph-title">Exportar / Imprimir</div>
+      <div class="ph-sub">Gere relatórios e exporte os dados</div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div class="panel" style="min-width:300px;max-width:380px;">
+        <div class="panel-title">Exportar CSV</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Exporte todos os registros em formato CSV compatível com Excel.</p>
+        <div class="fg" style="margin-bottom:12px;">
+          <label>Situação</label>
+          <select class="f-select" id="rel-sit" style="height:32px;">
+            <option value="">Todas</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Aguardando">Aguardando</option>
+            <option value="Em andamento">Em andamento</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:12px;">
+          <label>Mês</label>
+          <select class="f-select" id="rel-mes" style="height:32px;">
+            <option value="">Todos os meses</option>
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+            <option value="03">Março</option><option value="04">Abril</option>
+            <option value="05">Maio</option><option value="06">Junho</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="exportFiltradoCSV()">↓ Baixar CSV</button>
+      </div>
+      <div class="panel" style="min-width:300px;max-width:380px;">
+        <div class="panel-title">Imprimir relatório</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Gera uma versão para impressão com todos os registros e resumo estatístico.</p>
+        <button class="btn btn-primary" onclick="imprimirRelatorio()">⎙ Gerar impressão</button>
+      </div>
+      <div class="panel" style="min-width:300px;max-width:380px;">
+        <div class="panel-title">Importar CSV</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Importe registros a partir de um arquivo CSV exportado anteriormente.</p>
+        <input type="file" id="import-file" accept=".csv" style="display:none;" onchange="importarCSV(event)">
+        <button class="btn" onclick="document.getElementById('import-file').click()">↑ Selecionar arquivo CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ VIEW: GERENCIAR ════ -->
+  <div class="view" id="view-gerenciar">
+    <div class="ph">
+      <div class="ph-title">Gerenciar dados</div>
+      <div class="ph-sub">Configurações do sistema, tipos de serviço, notas e exportação</div>
+      <div class="ph-actions">
+        <button class="btn btn-primary" onclick="openModal()">+ Nova atividade</button>
+        <button class="btn btn-success" onclick="exportCSV()">↓ Exportar CSV</button>
+      </div>
+    </div>
+
+    <!-- ── LINHA 1: Stats + Meta + Configurações do sistema ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+
+      <!-- Stats -->
+      <div class="panel">
+        <div class="panel-title">Produtividade 2026</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
+          <div style="text-align:center;padding:8px;background:var(--surface2);border-radius:6px;">
+            <div style="font-size:24px;font-weight:700;color:var(--blue);" id="ger-total">0</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px;">Total</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:var(--surface2);border-radius:6px;">
+            <div style="font-size:24px;font-weight:700;color:var(--green);" id="ger-conc">0</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px;">Concluídas</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:var(--surface2);border-radius:6px;">
+            <div style="font-size:24px;font-weight:700;color:var(--yellow);" id="ger-pend">0</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px;">Pendentes</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:var(--surface2);border-radius:6px;">
+            <div style="font-size:24px;font-weight:700;color:var(--red);" id="ger-em">0</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px;">Andamento</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:10px;color:var(--muted);" id="ger-last">—</div>
+      </div>
+
+      <!-- Meta anual -->
+      <div class="panel">
+        <div class="panel-title">🎯 Meta anual de atividades</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Defina quantas atividades a GRAD pretende concluir em 2026. Acompanhe o progresso no dashboard.</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <input type="number" id="meta-input" min="1" max="500" placeholder="Ex: 120"
+            style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;font-size:16px;font-weight:700;text-align:center;">
+          <button class="btn btn-primary btn-sm" onclick="salvarMeta()">Salvar</button>
+        </div>
+        <!-- Barra de progresso -->
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Progresso: <span id="meta-pct" style="color:var(--green);font-weight:600;">—</span></div>
+        <div class="bar-track" style="height:10px;border-radius:5px;">
+          <div id="meta-bar" class="bar-fill" style="background:var(--green);width:0%;transition:width .5s ease;"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;" id="meta-sub">Configure uma meta para acompanhar o desempenho.</div>
+      </div>
+
+      <!-- Configurações do sistema -->
+      <div class="panel">
+        <div class="panel-title">⚙️ Configurações do sistema</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="fg">
+            <label>Responsável / Operador</label>
+            <input type="text" id="cfg-responsavel" placeholder="Nome do responsável" style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 9px;font-size:12px;">
+          </div>
+          <div class="fg">
+            <label>Ano de referência</label>
+            <input type="number" id="cfg-ano" placeholder="2026" style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 9px;font-size:12px;">
+          </div>
+          <div class="fg">
+            <label>Departamento</label>
+            <input type="text" id="cfg-depto" placeholder="Ex: Gerência de Radiocomunicação" style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 9px;font-size:12px;">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="salvarConfigs()">Salvar configurações</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LINHA 2: Tipos de serviço + Notas do operador ── -->
+    <div class="grid2" style="margin-bottom:14px;">
+
+      <!-- Tipos de serviço -->
+      <div class="panel">
+        <div class="panel-title">🛠️ Tipos de serviço</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Esta lista alimenta diretamente o formulário de cadastro. Personalize conforme a realidade da GRAD.</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <input type="text" id="tipo-input" placeholder="Novo tipo de serviço..." class="f-input" style="flex:1;height:30px;font-size:12px;"
+            onkeydown="if(event.key==='Enter') addTipo()">
+          <button class="btn btn-primary btn-sm" style="height:30px;padding:0 12px;" onclick="addTipo()">+ Adicionar</button>
+        </div>
+        <div id="tipo-list" style="display:flex;flex-direction:column;gap:3px;max-height:220px;overflow-y:auto;"></div>
+      </div>
+
+      <!-- Notas do operador -->
+      <div class="panel" style="display:flex;flex-direction:column;">
+        <div class="panel-title">📝 Diário / Notas do operador</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Registro pessoal: ordens verbais, ligações, pendências ainda não formalizadas. Salvo localmente.</div>
+        <textarea id="notas-textarea" rows="7"
+          style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:10px;font-size:12px;resize:vertical;line-height:1.6;"
+          placeholder="11/04 — Ligação da SEMOB sobre configuração de viaturas. Aguardando SIGADOC.&#10;..."></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+          <span style="font-size:10px;color:var(--muted);" id="notas-saved">Não salvo</span>
+          <button class="btn btn-primary btn-sm" onclick="salvarNotas()">Salvar notas</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LINHA 3: Importar + Exportar ── -->
+    <div class="grid2" style="margin-bottom:14px;">
+      <div class="panel">
+        <div class="panel-title">↑ Importar atividades (CSV)</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+          Importe atividades em lote a partir de um arquivo CSV exportado anteriormente ou de uma planilha do Excel.<br>
+          <span style="color:var(--blue);">Colunas esperadas:</span> Data, Tipo, SIGADOC, RISP/Unidade, Descrição, Início, Término, Situação, Observações
+        </div>
+        <div id="drop-zone"
+          style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;"
+          ondragover="event.preventDefault();this.style.borderColor='var(--blue)';this.style.background='#1f2d3d33';"
+          ondragleave="this.style.borderColor='var(--border)';this.style.background='none';"
+          ondrop="handleDrop(event)"
+          onclick="document.getElementById('import-file-ger').click()">
+          <div style="font-size:32px;margin-bottom:6px;color:var(--muted);">⬆</div>
+          <div style="font-size:12px;color:var(--text2);">Clique ou arraste o arquivo CSV aqui</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px;">CSV · vírgula ou ponto-e-vírgula · UTF-8 / ANSI</div>
+        </div>
+        <input type="file" id="import-file-ger" accept=".csv" style="display:none;" onchange="importarCSV(event)">
+        <div style="margin-top:10px;display:flex;gap:6px;">
+          <button class="btn btn-sm" onclick="baixarModelo()">↓ Baixar modelo (.csv)</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">↓ Exportar / Backup</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Compatible com Google Sheets, Excel e BigQuery. O backup JSON preserva todos os dados e configurações do sistema.</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <button class="btn btn-success" onclick="exportCSV()">↓ Exportar atividades (.csv)</button>
+          <button class="btn btn-primary" onclick="exportarBackupJSON()">↓ Backup completo (.json)</button>
+          <button class="btn" onclick="document.getElementById('restore-json').click()">↑ Restaurar backup (.json)</button>
+          <input type="file" id="restore-json" accept=".json" style="display:none;" onchange="restaurarBackup(event)">
+          <div style="border-top:1px solid var(--border2);margin:4px 0;"></div>
+          <button class="btn btn-warning" onclick="confirmarLimpar()">↺ Restaurar dados de demo</button>
+          <button class="btn btn-danger" onclick="if(confirm('ATENÇÃO: apagar TODOS os registros permanentemente?')){dados=[];salvar();renderAll();gerStatus('Dados apagados.');}">✕ Apagar todos os registros</button>
+        </div>
+        <div id="ger-status" style="margin-top:10px;font-size:11px;font-weight:500;color:var(--green);"></div>
+      </div>
+    </div>
+
+    <!-- ── TABELA DE ATIVIDADES ── -->
+    <div class="table-wrap">
+      <div class="table-bar" style="flex-wrap:wrap;gap:8px;">
+        <span class="table-bar-title">Todas as atividades (<span id="ger-count">0</span>)</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" id="ger-busca" placeholder="Buscar..." class="f-input" style="height:28px;font-size:11px;min-width:200px;" oninput="renderGerTable()">
+          <select id="ger-sit-fil" class="f-select" style="height:28px;font-size:11px;" onchange="renderGerTable()">
+            <option value="">Todas as situações</option>
+            <option>Concluído</option><option>Pendente</option>
+            <option>Aguardando</option><option>Em andamento</option>
+            <option>Cancelado/Suspenso</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl" style="font-size:11px;">
+          <thead><tr>
+            <th>Data</th><th>Tipo de Serviço</th><th>SIGADOC</th>
+            <th>RISP / Unidade</th><th>Descrição</th><th>Situação</th><th>Ações</th>
+          </tr></thead>
+          <tbody id="ger-tbl-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- MODAL: Nova / Editar atividade -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="modal-title">Nova atividade</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-row">
+        <div class="fg">
+          <label>Data *</label>
+          <input type="date" id="f-data">
+        </div>
+        <div class="fg">
+          <label>Tipo de Serviço *</label>
+          <select id="f-tipo"></select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="fg">
+          <label>Nº SIGADOC / PRO / OFI / OS / DFI/DS</label>
+          <input type="text" id="f-sigadoc" placeholder="ex: PM-OFI-2026/12345">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label>RISP / Unidade / Município *</label>
+          <input type="text" id="f-risp" placeholder="ex: RISP 1 – 10ª BPM (Cuiabá)">
+        </div>
+        <div class="fg">
+          <label>Situação *</label>
+          <select id="f-sit">
+            <option value="Concluído">Concluído</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Aguardando">Aguardando</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Cancelado/Suspenso">Cancelado/Suspenso</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="fg">
+          <label>Descrição da Atividade *</label>
+          <textarea id="f-desc" rows="3" placeholder="Descreva a atividade realizada..."></textarea>
+        </div>
+      </div>
+      <div class="form-row three">
+        <div class="fg">
+          <label>Data Início</label>
+          <input type="date" id="f-ini">
+        </div>
+        <div class="fg">
+          <label>Data Término</label>
+          <input type="date" id="f-fim">
+        </div>
+        <div class="fg">
+          <label>Situação da data</label>
+          <select id="f-sit2">
+            <option value="">—</option>
+            <option>Concluído</option><option>Pendente</option>
+            <option>Aguardando</option><option>Em andamento</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="fg">
+          <label>Observações</label>
+          <textarea id="f-obs" rows="2" placeholder="Observações, detalhes adicionais..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarRegistro()">Salvar atividade</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div class="tooltip-card" id="tooltip-card"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// DADOS DEMO — espelho completo da planilha
+// ═══════════════════════════════════════════
+const DEMO = [
+  {id:1, data:'2026-01-11', tipo:'Missão FRB Móvel', sigadoc:'OS-001/GRAD/2026\nSESP-DIC-2026/01898', risp:'RISP 1 – 10ª BPM/1ª CR (Cuiabá)', desc:'Foi deslocado com a FRB Móvel para atender a demanda de radiocomunicação na Corrida de Rês no Po Novo MT', ini:'2026-01-11', fim:'2026-01-11', sit:'Concluído', obs:'Missão Concluída conforme demanda'},
+  {id:2, data:'2026-01-26', tipo:'Implantação de Repetidora', sigadoc:'SESP-PRO-2024/15181', risp:'RISP 7 – 10ª BPM/CR 7 (Tangará da Serra)', desc:'Implantação de repetidora no bairro Vila Esmeralda – Conforme Relatório Técnico em anexo na pasta compartilhada', ini:'26/01/2026', fim:'28/01/2026', sit:'Concluído', obs:'Equipes da GRAD e Teltronic de Serra, o procederam com a imp repetidora no bairro Vila Esmeralda'},
+  {id:3, data:'2026-02-11', tipo:'Transferência de Aparelhos', sigadoc:'SESP-CIN-2026/01861', risp:'SUTRAN/SESP', desc:'Instalação dos terminais móveis nas 5 viaturas da SUTRAN. Fiscalizado e finalizado pelo 1ª SGT PM Moraes', ini:'2026-02-11', fim:'2026-02-11', sit:'Concluído', obs:''},
+  {id:4, data:'2026-02-13', tipo:'Inspeção Técnica / Reprogramação', sigadoc:'PM-OFI-2026/13988', risp:'RISP 1 – 10ª BPM/1ª CR (Cuiabá)', desc:'Inspeção técnica de 07 VTRs do 1ª BPM, com atualização de firmware e reprogramação de máscaras em 05 rádios móveis', ini:'2026-02-13', fim:'2026-02-16', sit:'Concluído', obs:'Missão Concluída conforme demanda'},
+  {id:5, data:'2026-02-24', tipo:'Configuração de Viatura', sigadoc:'CBM-OFI-2026/00788', risp:'4ª CB BM (Barra do Garças)', desc:'Configurar viaturas do 4ª CBM – Unidade Raquete', ini:'2026-02-24', fim:'', sit:'Aguardando', obs:''},
+  {id:6, data:'2026-02-24', tipo:'Verificação / Adequação', sigadoc:'', risp:'1ª CR (Nova Brasilândia)', desc:'Verificar Adequação do padrão de energia', ini:'2026-02-24', fim:'', sit:'Concluído', obs:''},
+  {id:7, data:'2026-02-24', tipo:'Remanejamento de ERB', sigadoc:'', risp:'1ª CI/10ª BPM (Guia)', desc:'ERB remanejada na torre da Vivo no Distrito da Guia', ini:'2026-02-25', fim:'2026-03-10', sit:'Concluído', obs:'Serviço concluído com sucesso'},
+  {id:8, data:'2026-02-24', tipo:'Solicitação de Repetidora', sigadoc:'', risp:'3ª CR (Sinop)', desc:'Solicitação de mais uma repetidora para atender Sinop', ini:'2026-02-24', fim:'', sit:'Pendente', obs:''},
+  {id:9, data:'2026-02-24', tipo:'Solicitação de Repetidora', sigadoc:'PM-PRO-2026/02503', risp:'11ª CR (Campo Verde)', desc:'Solicitação de repetidora para atender área rural de Campo Verde', ini:'2026-02-24', fim:'', sit:'Pendente', obs:'aguardando agenda'},
+  {id:10, data:'2026-03-05', tipo:'Cautela Temporária de Equipamentos', sigadoc:'', risp:'SAMU CIOSP (Cuiabá)', desc:'Cautela temporária de HTs para missões, externa', ini:'2026-01-05', fim:'2026-07-03', sit:'Concluído', obs:''},
+  {id:11, data:'2026-03-05', tipo:'Cautela Temporária de Equipamentos', sigadoc:'', risp:'CBMMT (Cuiabá)', desc:'Cautela temporária de HTs para missões, externa', ini:'2026-01-05', fim:'2026-07-03', sit:'Concluído', obs:''},
+  {id:12, data:'2026-03-05', tipo:'Cautela Temporária de Equipamentos', sigadoc:'', risp:'TELTRONIC (Cuiabá)', desc:'Cautela temporária de HTs para missões, externa', ini:'2026-01-05', fim:'2026-07-03', sit:'Concluído', obs:''},
+  {id:13, data:'2026-03-12', tipo:'Cautela Temporária de Equipamentos', sigadoc:'', risp:'ACADEMIA DE POLICIA COSTA VERDE (Cuiabá)', desc:'Cautela temporária de HTs para missões, externa', ini:'2026-01-12', fim:'2026-01-14', sit:'Concluído', obs:''},
+  {id:14, data:'2026-03-13', tipo:'Cautela Temporária de Equipamentos', sigadoc:'', risp:'CBMMT (Cuiabá)', desc:'Cautela temporária de HTs para missões, externa', ini:'2026-01-13', fim:'2026-01-15', sit:'Concluído', obs:''},
+  {id:15, data:'2026-03-26', tipo:'Cautela Temporária de Equipamentos', sigadoc:'', risp:'CBMMT (Cuiabá)', desc:'Cautela temporária de HTs para missões, externa', ini:'2026-02-26', fim:'2026-02-28', sit:'Concluído', obs:''},
+  {id:16, data:'2026-03-27', tipo:'Cautela Temporária de Equipamentos', sigadoc:'', risp:'ACADEMIA DE POLICIA COSTA VERDE (Cuiabá)', desc:'Cautela temporária de HTs para missões, externa', ini:'2026-02-27', fim:'2026-03-02', sit:'Concluído', obs:''},
+  {id:17, data:'2026-02-03', tipo:'Curso / Treinamento', sigadoc:'SESP-OFI-2026/02034\nSESP-DES-2026/40204', risp:'GEFRON', desc:'Curso Técnico de Radiocomunicação Digital – GEFRON', ini:'2026-02-03', fim:'2026-03-06', sit:'Concluído', obs:'Curso de Radiocomunicação Digital D capacitar operadores das in convidados da PRF / Relatório Compartilhada'},
+  {id:18, data:'2026-04-23', tipo:'Curso / Treinamento', sigadoc:'SEJUSOFI202609988', risp:'SOCIOEDUCATIVO', desc:'Curso Técnico de Radiocomunicação Digital – SOCIOEDUCATIVO 23/04', ini:'', fim:'', sit:'Pendente', obs:''},
+  {id:19, data:'2026-03-09', tipo:'Gravação de Despacho de Ocorrência', sigadoc:'PM-OFI-2026/14819', risp:'10ª BPM (Cuiabá)', desc:'GRAVAÇÃO DE DESPACHO DA VIATURA PREFIXO 6144 PLACA 3DA', ini:'2026-03-09', fim:'', sit:'Concluído', obs:''},
+  {id:20, data:'2026-03-09', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/04374', risp:'10ª BPM (Cuiabá)', desc:'Substituição de 12 baterias Unidade 10ª BPM', ini:'2026-03-09', fim:'', sit:'Concluído', obs:''},
+  {id:21, data:'2026-03-09', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/04379', risp:'1ª BPM (Cuiabá)', desc:'Substituição de 12 baterias (termo de entrega em anexo) Unidade 1ª BPM', ini:'2026-03-09', fim:'', sit:'Concluído', obs:''},
+  {id:22, data:'2026-03-09', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/17107', risp:'3ª BPM (Cuiabá)', desc:'Substituição de 20 (vinte) baterias (termo de entrega em anexo) Unidade 3ª BPM', ini:'2026-03-09', fim:'', sit:'Concluído', obs:''},
+  {id:23, data:'2026-03-09', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/17907', risp:'2ª CR (Várzea Grande)', desc:'Substituição de (28) baterias (termo de entrega em anexo) Unidade CRZ', ini:'2026-03-09', fim:'', sit:'Concluído', obs:''},
+  {id:24, data:'2026-03-09', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/17158', risp:'9ª BPM (Cuiabá)', desc:'Substituição de (10) baterias (termo de entrega em anexo) Unidade 9ª BPM', ini:'2026-03-09', fim:'', sit:'Concluído', obs:''},
+  {id:25, data:'2026-03-10', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/17881', risp:'1ª CIPM (Cuiabá)', desc:'Substituição de (06) baterias (termo de entrega em anexo) Unidades 1ª BPM', ini:'2026-03-10', fim:'', sit:'Concluído', obs:''},
+  {id:26, data:'2026-03-10', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/19813', risp:'7ª BPM (Cuiabá)', desc:'Substituição de (06) baterias (termo de entrega em anexo) Unidade 7ª BPM', ini:'2026-03-10', fim:'', sit:'Concluído', obs:''},
+  {id:27, data:'2026-03-10', tipo:'Reunião', sigadoc:'SESP-CIC-2026/00018', risp:'GRAD (Cuiabá)', desc:'Encaminhamento da 1ª Revisão do Planejamento Estratégico da SESP MT (2021–2030)', ini:'2026-03-10', fim:'', sit:'Concluído', obs:''},
+  {id:28, data:'2026-03-16', tipo:'Acesso ao GIS Viewer', sigadoc:'PM-PRO-2026/12718', risp:'14ª BPM (Primavera do Leste)', desc:'Gis Viewer Liberado', ini:'2026-03-16', fim:'', sit:'Concluído', obs:''},
+  {id:29, data:'2026-03-19', tipo:'Gateway DMR', sigadoc:'SESP-PRO-2026/10246', risp:'GRAD (Cuiabá)', desc:'Gateway DMR TJ MT', ini:'2026-03-19', fim:'', sit:'Pendente', obs:''},
+  {id:30, data:'2026-03-20', tipo:'Solicitação de Rádios Digitais', sigadoc:'SESP-PRO-2025/09368', risp:'SUPCIOSI (Cuiabá)', desc:'Solicitação de rádios digitais portáteis ao senhor Rodrigo Luiz Benato', ini:'2026-03-20', fim:'', sit:'Pendente', obs:''},
+  {id:31, data:'2026-03-23', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/24048', risp:'13ª BPM (Lucas do Rio Verde)', desc:'Substituição de (05) baterias (termo de entrega em anexo) Unidade 13ª BPM', ini:'2026-03-23', fim:'', sit:'Concluído', obs:''},
+  {id:32, data:'2026-03-24', tipo:'Curso / Treinamento', sigadoc:'SEJUSOFI202609988', risp:'GRAD (Cuiabá)', desc:'TREINAMENTO – SOCIOEDUCATIVO', ini:'2026-03-24', fim:'', sit:'Em andamento', obs:''},
+  {id:33, data:'2026-03-26', tipo:'Solicitação de Rádio Fixo / HT', sigadoc:'CBM-PRO-2026/00953', risp:'4º CREM (Barra do Garças)', desc:'Solicitar rádio fixo e ht para UBM Querência', ini:'2026-03-26', fim:'', sit:'Em andamento', obs:''},
+  {id:34, data:'2026-03-27', tipo:'Substituição de Baterias', sigadoc:'PM-OFI-2026/23669', risp:'RAIO (Cuiabá)', desc:'Substituição de 12 bateria Unidade RAIO / BA ID', ini:'2026-03-27', fim:'', sit:'Concluído', obs:''},
+  {id:35, data:'2026-03-27', tipo:'Atualização de Rádio / Firmware', sigadoc:'', risp:'CRBM V – COMODORO', desc:'Atualizar rádio fixo, móveis e portáteis do CRBM V – Comódoro', ini:'2026-03-27', fim:'', sit:'Em andamento', obs:'contato 66 996863071'},
+  {id:36, data:'2026-04-24', tipo:'Reunião', sigadoc:'', risp:'CRBM V – COMODORO', desc:'Reunião com a gerente de comunicação de Brasília PRF 15 HORAS horário de Brasília', ini:'2026-04-24', fim:'2026-04-24', sit:'Pendente', obs:''},
+];
+
+// ═══════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════
+let dados = [];
+let editIdx = null;
+let sortField = 'data';
+let sortAsc = false;
+let dashTableFilter = 'pend';
+let chartsInit = false;
+let barMesChart = null;
+let donutChartObj = null;
+let trendChartObj = null;
+
+// ═══════════════════════════════════════════
+// PERSISTÊNCIA
+// ═══════════════════════════════════════════
+function salvar() {
+  try { localStorage.setItem('ciosp_produtividade_2026', JSON.stringify(dados)); } catch(e){}
+}
+
+function carregar() {
+  try {
+    const r = localStorage.getItem('ciosp_produtividade_2026');
+    if(r) { dados = JSON.parse(r); return; }
+  } catch(e){}
+  dados = DEMO.map(d=>({...d}));
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function fmtDate(d) {
+  if(!d) return '—';
+  if(d.includes('-')) {
+    const [y,m,day] = d.split('-');
+    return `${day}/${m}/${y}`;
+  }
+  return d;
+}
+
+function toISO(d) {
+  if(!d) return '';
+  if(d.includes('/')) {
+    const p = d.split('/');
+    if(p.length===3) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  }
+  return d;
+}
+
+function sitClass(s) {
+  if(!s) return '';
+  const sl = s.toLowerCase();
+  if(sl.includes('conclu')) return 'b-green';
+  if(sl.includes('cancel')||sl.includes('suspen')) return 'b-gray';
+  if(sl.includes('pend')) return 'b-yellow';
+  if(sl.includes('aguard')) return 'b-yellow';
+  if(sl.includes('andam')) return 'b-blue';
+  return 'b-red';
+}
+
+function badge(s) {
+  return `<span class="badge ${sitClass(s)}"><span class="badge-dot"></span>${s||'—'}</span>`;
+}
+
+function getMes(d) { return d.data ? d.data.slice(5,7) : ''; }
+
+function calcStats() {
+  const total = dados.length;
+  const conc = dados.filter(d=>d.sit==='Concluído').length;
+  const pend = dados.filter(d=>d.sit==='Pendente').length;
+  const agd = dados.filter(d=>d.sit==='Aguardando').length;
+  const em = dados.filter(d=>d.sit==='Em andamento').length;
+  const sigs = dados.filter(d=>d.sigadoc&&d.sigadoc.trim()).length;
+  return {total,conc,pend,agd,em,sigs};
+}
+
+function avgDays() {
+  // Só conta registros CONCLUÍDOS com ini e fim preenchidos
+  const pairs = dados.filter(d=>
+    d.sit==='Concluído' &&
+    d.ini && d.fim &&
+    d.ini!=='—' && d.fim!=='—' &&
+    d.ini.trim()!=='' && d.fim.trim()!==''
+  );
+  if(!pairs.length) return null;
+  const diffs = pairs.map(d=>{
+    const a = new Date(toISO(d.ini));
+    const b = new Date(toISO(d.fim));
+    if(isNaN(a)||isNaN(b)) return null;
+    const diff = (b-a)/86400000;
+    return diff >= 0 ? diff : null; // ignora datas invertidas
+  }).filter(x=>x!==null);
+  if(!diffs.length) return null;
+  return (diffs.reduce((a,b)=>a+b,0)/diffs.length).toFixed(1);
+}
+
+// ═══════════════════════════════════════════
+// RENDER VIEWS
+// ═══════════════════════════════════════════
+function renderAll() {
+  applyFilters();
+  renderPendentes();
+  renderDashboard();
+  updateNavBadge();
+  updateGerenciar();
+}
+
+function updateNavBadge() {
+  const n = dados.filter(d=>d.sit==='Pendente'||d.sit==='Aguardando').length;
+  document.getElementById('nav-pend-badge').textContent = n;
+}
+
+// ── ATIVIDADES TABLE ──
+function sortBy(field) {
+  if(sortField===field) sortAsc=!sortAsc;
+  else { sortField=field; sortAsc=true; }
+  applyFilters();
+}
+
+function applyFilters() {
+  const sit = document.getElementById('f-situacao').value;
+  const mes = document.getElementById('f-mes').value;
+  const tipo = document.getElementById('f-tipo-fil').value;
+  const busca = document.getElementById('f-busca').value.toLowerCase().trim();
+
+  // Populate tipo filter
+  const tipoSel = document.getElementById('f-tipo-fil');
+  if(tipoSel.options.length <= 1) {
+    const tipos = [...new Set(dados.map(d=>d.tipo).filter(Boolean))].sort();
+    tipos.forEach(t=>{
+      const o = document.createElement('option'); o.value=t; o.textContent=t;
+      tipoSel.appendChild(o);
+    });
+  }
+
+  let filtered = dados.filter(d=>{
+    if(sit && d.sit!==sit) return false;
+    if(mes && getMes(d)!==mes) return false;
+    if(tipo && d.tipo!==tipo) return false;
+    if(busca && !(
+      (d.desc||'').toLowerCase().includes(busca)||
+      (d.risp||'').toLowerCase().includes(busca)||
+      (d.tipo||'').toLowerCase().includes(busca)||
+      (d.sigadoc||'').toLowerCase().includes(busca)||
+      (d.obs||'').toLowerCase().includes(busca)
+    )) return false;
+    return true;
+  });
+
+  filtered.sort((a,b)=>{
+    let va = a[sortField]||'', vb = b[sortField]||'';
+    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+
+  document.getElementById('total-label').textContent = `${dados.length} registros`;
+  document.getElementById('showing-count').textContent = `Exibindo ${filtered.length} de ${dados.length}`;
+
+  document.getElementById('table-body').innerHTML = filtered.length ? filtered.map(d=>`
+    <tr>
+      <td class="td-date">${fmtDate(d.data)}</td>
+      <td style="max-width:160px;font-size:11px;">${d.tipo||'—'}</td>
+      <td class="td-sig">${(d.sigadoc||'—').replace(/\n/g,'<br>')}</td>
+      <td style="max-width:140px;font-size:11px;">${d.risp||'—'}</td>
+      <td class="td-desc">${d.desc||'—'}</td>
+      <td class="td-muted">${fmtDate(d.ini)}</td>
+      <td class="td-muted">${fmtDate(d.fim)}</td>
+      <td>${badge(d.sit)}</td>
+      <td style="max-width:120px;font-size:10px;color:var(--muted);">${d.obs||'—'}</td>
+      <td>
+        <div class="td-actions">
+          <button class="btn btn-sm" title="Editar" onclick="editarRegistro(${d.id})">✎</button>
+          <button class="btn btn-sm btn-danger" title="Excluir" onclick="excluirRegistro(${d.id})">✕</button>
+        </div>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="10" class="empty">Nenhum registro encontrado com os filtros aplicados.</td></tr>`;
+}
+
+function clearFilters() {
+  ['f-situacao','f-mes','f-tipo-fil'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-busca').value='';
+  applyFilters();
+}
+
+// ── PENDENTES ──
+function renderPendentes() {
+  const pends = dados.filter(d=>d.sit==='Pendente'||d.sit==='Aguardando')
+    .sort((a,b)=>a.data.localeCompare(b.data));
+  document.getElementById('pend-count').textContent = `${pends.length} pendência${pends.length!==1?'s':''}`;
+  document.getElementById('pend-body').innerHTML = pends.length ? pends.map(d=>`
+    <tr>
+      <td class="td-date">${fmtDate(d.data)}</td>
+      <td style="font-size:11px;">${d.tipo||'—'}</td>
+      <td class="td-sig">${(d.sigadoc||'—').replace(/\n/g,'<br>')}</td>
+      <td style="font-size:11px;">${d.risp||'—'}</td>
+      <td class="td-desc">${d.desc||'—'}</td>
+      <td class="td-muted">${fmtDate(d.ini)}</td>
+      <td>${badge(d.sit)}</td>
+      <td><button class="btn btn-sm btn-warning" onclick="editarRegistro(${d.id})">✎ Resolver</button></td>
+    </tr>`).join('') : `<tr><td colspan="8" class="empty">Nenhuma pendência aberta.</td></tr>`;
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const {total,conc,pend,agd,em,sigs} = calcStats();
+  setEl('kpi-total', total);
+  setEl('kpi-conc', conc);
+  setEl('kpi-conc-p', total ? `${Math.round(conc/total*100)}% do total` : '—');
+  setEl('kpi-pend', pend);
+  setEl('kpi-agd', agd);
+  setEl('kpi-em', em);
+  setEl('kpi-sig', sigs);
+  setEl('donut-n', total);
+  setEl('donut-p', total ? `${(conc/total*100).toFixed(1)}%` : '0%');
+
+  // Legend
+  const legendData=[
+    {label:'Concluído',val:conc,color:'#3fb950'},
+    {label:'Pendente',val:pend,color:'#d29910'},
+    {label:'Em andamento',val:em,color:'#58a6ff'},
+    {label:'Aguardando',val:agd,color:'#e3b341'},
+  ];
+  document.getElementById('donut-legend').innerHTML = legendData.map(l=>`
+    <div class="leg-item">
+      <span class="leg-dot" style="background:${l.color};"></span>
+      <span class="leg-label">${l.label}</span>
+      <span class="leg-val">${l.val}</span>
+      <span class="leg-pct">${total?Math.round(l.val/total*100):0}%</span>
+    </div>`).join('');
+
+  // Bars por unidade
+  const unidades={};
+  dados.forEach(d=>{
+    const u=(d.risp||'').split('–')[0].split('/')[0].trim().split('(')[0].trim().slice(0,18);
+    if(u) unidades[u]=(unidades[u]||0)+1;
+  });
+  const topU = Object.entries(unidades).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxU = topU[0]?.[1]||1;
+  const uColors=['#1f6feb','#388bfd','#58a6ff','#79b8ff','#a5d0ff','#cde6ff'];
+  document.getElementById('bar-unidades').innerHTML = topU.map(([k,v],i)=>`
+    <div class="bar-item">
+      <div class="bar-top"><span style="font-size:10px;">${k}</span><span class="bar-val">${v}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxU*100)}%;background:${uColors[i]||'#1f6feb'};"></div></div>
+    </div>`).join('');
+
+  // Bars por tipo
+  const tipos={};
+  dados.forEach(d=>{if(d.tipo) tipos[d.tipo]=(tipos[d.tipo]||0)+1;});
+  const topT = Object.entries(tipos).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxT = topT[0]?.[1]||1;
+  const tColors=['#3fb950','#58a6ff','#d29910','#e3b341','#f47068','#39c5cf'];
+  document.getElementById('bar-tipos').innerHTML = topT.map(([k,v],i)=>`
+    <div class="bar-item">
+      <div class="bar-top"><span style="font-size:10px;">${k}</span><span class="bar-val" style="color:${tColors[i]}">${v}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxT*100)}%;background:${tColors[i]};"></div></div>
+    </div>`).join('');
+
+  // Alertas
+  const alertas = [];
+  if(pend+agd > 0) alertas.push({ico:'warn', t:`${pend+agd} atividade${pend+agd!==1?'s':''} pendente${pend+agd!==1?'s':''}`, s:`Pendente: ${pend} | Aguardando: ${agd}`});
+  if(em > 0) alertas.push({ico:'info', t:`${em} atividade${em!==1?'s':''} em andamento`, s:dados.filter(d=>d.sit==='Em andamento').map(d=>d.risp||d.tipo).slice(0,3).join(', ')});
+  const hoje = new Date();
+  const proximos = dados.filter(d=>{
+    const dt = new Date(d.data);
+    const diff = (dt-hoje)/86400000;
+    return diff >= 0 && diff <= 7 && d.sit !== 'Concluído';
+  });
+  if(proximos.length) alertas.push({ico:'warn', t:`${proximos.length} atividade${proximos.length!==1?'s':''} nos próximos 7 dias`, s:proximos.map(d=>d.tipo).join(', ')});
+  document.getElementById('alertas-list').innerHTML = alertas.map(a=>`
+    <div class="alert-item">
+      <div class="alert-ico ai-${a.ico}">${a.ico==='warn'?'!':a.ico==='ok'?'✓':'i'}</div>
+      <div class="alert-body"><div class="alert-t">${a.t}</div><div class="alert-s">${a.s}</div></div>
+    </div>`).join('');
+
+  // Tempo médio
+  const avg = avgDays();
+  setEl('avg-days', avg!==null ? avg : '—');
+
+  // Tabela dashboard
+  renderDashTable(dashTableFilter);
+
+  // Charts
+  renderCharts(total, conc, pend, agd, em);
+}
+
+function renderDashTable(f) {
+  dashTableFilter = f;
+  let rows = dados;
+  if(f==='pend') rows = dados.filter(d=>d.sit==='Pendente'||d.sit==='Aguardando');
+  if(f==='conc') rows = dados.filter(d=>d.sit==='Concluído');
+  rows = [...rows].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,10);
+  document.getElementById('dash-tbl-body').innerHTML = rows.length ? rows.map(d=>`
+    <tr>
+      <td class="td-date">${fmtDate(d.data)}</td>
+      <td style="font-size:10px;max-width:100px;">${(d.risp||'').split('(')[0].trim().slice(0,22)}</td>
+      <td style="font-size:10px;max-width:90px;">${(d.tipo||'').slice(0,20)}</td>
+      <td class="td-sig" style="font-size:10px;">${(d.sigadoc||'—').split('\n')[0]}</td>
+      <td style="font-size:11px;color:var(--text2);max-width:320px;white-space:normal;line-height:1.4;">${d.desc||'—'}</td>
+      <td>${badge(d.sit)}</td>
+    </tr>`).join('') : `<tr><td colspan="5" class="empty">Sem registros.</td></tr>`;
+}
+
+function setTableFilter(f, btn) {
+  document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashTable(f);
+}
+
+// ── CHARTS ──
+function renderCharts(total, conc, pend, agd, em) {
+  // Donut
+  if(donutChartObj) { donutChartObj.destroy(); donutChartObj=null; }
+  const dCtx = document.getElementById('donutChart');
+  if(dCtx) {
+    donutChartObj = new Chart(dCtx, {
+      type:'doughnut',
+      data:{
+        labels:['Concluído','Pendente','Em andamento','Aguardando'],
+        datasets:[{data:[conc,pend,em,agd],backgroundColor:['#3fb950','#d29910','#58a6ff','#e3b341'],borderWidth:0,hoverOffset:4}]
+      },
+      options:{responsive:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}}}
+    });
+  }
+
+  // Bar por mês
+  const mesMes=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const byMes={};
+  dados.forEach(d=>{
+    const m=parseInt(getMes(d))-1;
+    if(isNaN(m)||m<0) return;
+    if(!byMes[m]) byMes[m]={c:0,p:0,e:0};
+    if(d.sit==='Concluído') byMes[m].c++;
+    else if(d.sit==='Pendente'||d.sit==='Aguardando') byMes[m].p++;
+    else byMes[m].e++;
+  });
+  const mesesUsados=Object.keys(byMes).sort((a,b)=>a-b).map(Number);
+  const mesLabels=mesesUsados.map(m=>mesMes[m]);
+  if(barMesChart){barMesChart.destroy();barMesChart=null;}
+  const bCtx=document.getElementById('barMesChart');
+  if(bCtx){
+    barMesChart=new Chart(bCtx,{
+      type:'bar',
+      data:{
+        labels:mesLabels,
+        datasets:[
+          {label:'Concluído',data:mesesUsados.map(m=>byMes[m].c),backgroundColor:'#3fb950',borderRadius:3},
+          {label:'Pendente/Aguardando',data:mesesUsados.map(m=>byMes[m].p),backgroundColor:'#d29910',borderRadius:3},
+          {label:'Em andamento',data:mesesUsados.map(m=>byMes[m].e),backgroundColor:'#58a6ff',borderRadius:3},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}`}}
+        },
+        scales:{
+          x:{stacked:true,ticks:{color:'#8b949e',font:{size:10}},grid:{color:'#21262d'}},
+          y:{stacked:true,ticks:{color:'#8b949e',font:{size:10},precision:0},grid:{color:'#21262d'}}
+        }
+      },
+      plugins:[{
+        id:'stackedLabels',
+        afterDatasetsDraw(chart){
+          const {ctx,data,scales:{y}}=chart;
+          const dsCount=data.datasets.length;
+          ctx.save();
+          ctx.textAlign='center';
+          ctx.textBaseline='middle';
+          // per-segment numbers
+          data.datasets.forEach((_,dsIdx)=>{
+            const meta=chart.getDatasetMeta(dsIdx);
+            meta.data.forEach((bar,i)=>{
+              const val=data.datasets[dsIdx].data[i];
+              if(!val||val<1) return;
+              const {x,y:by,height}=bar.getProps(['x','y','height'],true);
+              if(height<13) return; // too thin to label
+              ctx.font='bold 10px Segoe UI,sans-serif';
+              ctx.fillStyle='rgba(255,255,255,0.9)';
+              ctx.fillText(val, x, by+height/2);
+            });
+          });
+          // total on top of each bar
+          const totals=data.labels.map((_,i)=>data.datasets.reduce((s,ds)=>s+(ds.data[i]||0),0));
+          ctx.font='bold 12px Segoe UI,sans-serif';
+          ctx.fillStyle='#e6edf3';
+          ctx.textBaseline='bottom';
+          totals.forEach((total,i)=>{
+            if(!total) return;
+            const topMeta=chart.getDatasetMeta(dsCount-1);
+            const bar=topMeta.data[i];
+            if(!bar) return;
+            const {x,y:by}=bar.getProps(['x','y'],true);
+            ctx.fillText(total, x, by-5);
+          });
+          ctx.restore();
+        }
+      }]
+    });
+  }
+
+  // Trend
+  if(trendChartObj){trendChartObj.destroy();trendChartObj=null;}
+  const tCtx=document.getElementById('trendChart');
+  if(tCtx){
+    trendChartObj=new Chart(tCtx,{
+      type:'line',
+      data:{
+        labels:mesLabels,
+        datasets:[
+          {label:'Concluídos',data:mesesUsados.map(m=>byMes[m].c),borderColor:'#3fb950',backgroundColor:'#3fb95022',tension:.35,fill:true,pointBackgroundColor:'#3fb950',pointRadius:3,borderWidth:2},
+          {label:'Pendentes',data:mesesUsados.map(m=>byMes[m].p),borderColor:'#d29910',backgroundColor:'transparent',tension:.35,fill:false,pointBackgroundColor:'#d29910',pointRadius:3,borderWidth:2,borderDash:[4,3]},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{color:'#8b949e',font:{size:9}},grid:{color:'#21262d'}},
+          y:{ticks:{color:'#8b949e',font:{size:9},precision:0},grid:{color:'#21262d'}}
+        }
+      }
+    });
+  }
+}
+
+// ── GERENCIAR ──
+// ═══════════════════════════════════════════
+// GERENCIAR — estado
+// ═══════════════════════════════════════════
+let tiposServico = [];
+let configs = { responsavel:'', ano:'2026', depto:'Gerência de Radiocomunicação', metaAnual:0 };
+let notasOperador = '';
+
+const TIPOS_DEFAULT = [
+  'Missão FRB Móvel','Implantação de Repetidora','Solicitação de Repetidora',
+  'Configuração de Viatura','Transferência de Aparelhos','Inspeção Técnica / Reprogramação',
+  'Atualização de Rádio / Firmware','Substituição de Baterias','Cautela Temporária de Equipamentos',
+  'Remanejamento de ERB','Verificação / Adequação','Acesso ao GIS Viewer',
+  'Gateway DMR','Gravação de Despacho de Ocorrência','Solicitação de Rádios Digitais',
+  'Solicitação de Rádio Fixo / HT','Curso / Treinamento','Reunião','Outro',
+];
+
+function salvarConfig() {
+  try { localStorage.setItem('ciosp_config', JSON.stringify({ tiposServico, configs, notasOperador })); } catch(e){}
+}
+function carregarConfig() {
+  try {
+    const r = localStorage.getItem('ciosp_config');
+    if(r) {
+      const c = JSON.parse(r);
+      tiposServico = c.tiposServico?.length ? c.tiposServico : [...TIPOS_DEFAULT];
+      configs = { ...configs, ...(c.configs||{}) };
+      notasOperador = c.notasOperador || '';
+      return;
+    }
+  } catch(e){}
+  tiposServico = [...TIPOS_DEFAULT];
+}
+
+function gerStatus(msg) {
+  const el = document.getElementById('ger-status');
+  if(el) { el.textContent = '✓ ' + msg; el.style.color='var(--green)'; setTimeout(()=>{ if(el) el.textContent=''; }, 3500); }
+}
+
+// ── TIPOS DE SERVIÇO ──
+function addTipo() {
+  const v = document.getElementById('tipo-input').value.trim();
+  if(!v) return;
+  if(tiposServico.includes(v)) { gerStatus('Tipo já existe.'); return; }
+  tiposServico.push(v);
+  salvarConfig();
+  document.getElementById('tipo-input').value = '';
+  renderTipoList();
+  populateModalTipos();
+}
+function removeTipo(i) {
+  tiposServico.splice(i,1);
+  salvarConfig();
+  renderTipoList();
+  populateModalTipos();
+}
+function editTipo(i) {
+  const novo = prompt('Renomear tipo:', tiposServico[i]);
+  if(novo && novo.trim() && novo.trim()!==tiposServico[i]) {
+    tiposServico[i] = novo.trim();
+    salvarConfig();
+    renderTipoList();
+    populateModalTipos();
+  }
+}
+function renderTipoList() {
+  const el = document.getElementById('tipo-list');
+  if(!el) return;
+  // contagem de uso de cada tipo
+  const counts = {};
+  dados.forEach(d=>{ if(d.tipo) counts[d.tipo]=(counts[d.tipo]||0)+1; });
+  el.innerHTML = tiposServico.map((t,i)=>`
+    <div style="display:flex;align-items:center;gap:5px;padding:4px 8px;background:var(--surface2);border-radius:5px;border:1px solid var(--border2);">
+      <span style="flex:1;font-size:11px;color:var(--text2);">${t}</span>
+      ${counts[t] ? `<span style="font-size:9px;background:var(--blue-bg);color:var(--blue);border-radius:8px;padding:1px 6px;">${counts[t]}×</span>` : ''}
+      <button class="btn btn-sm" onclick="editTipo(${i})" title="Renomear" style="padding:2px 6px;">✎</button>
+      <button class="btn btn-sm btn-danger" onclick="removeTipo(${i})" title="Remover" style="padding:2px 6px;">✕</button>
+    </div>`).join('');
+}
+function populateModalTipos() {
+  const sel = document.getElementById('f-tipo');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = tiposServico.map(t=>`<option value="${t}">${t}</option>`).join('');
+  if(cur) sel.value = cur;
+}
+// Também popula o filtro de tipos da view Atividades
+function populateFiltroTipos() {
+  const sel = document.getElementById('f-tipo-fil');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos os tipos</option>' + tiposServico.map(t=>`<option value="${t}">${t}</option>`).join('');
+  if(cur) sel.value = cur;
+}
+
+// ── CONFIGURAÇÕES DO SISTEMA ──
+function salvarConfigs() {
+  configs.responsavel = document.getElementById('cfg-responsavel')?.value || '';
+  configs.ano         = document.getElementById('cfg-ano')?.value || '2026';
+  configs.depto       = document.getElementById('cfg-depto')?.value || '';
+  salvarConfig();
+  gerStatus('Configurações salvas!');
+  // Atualiza subtítulo
+  const sub = document.querySelector('.topbar .tb-sub');
+  if(sub && configs.depto) sub.textContent = `SESP/MT · ${configs.depto}`;
+}
+function renderConfigs() {
+  const r = document.getElementById('cfg-responsavel');
+  const a = document.getElementById('cfg-ano');
+  const d = document.getElementById('cfg-depto');
+  if(r) r.value = configs.responsavel;
+  if(a) a.value = configs.ano;
+  if(d) d.value = configs.depto;
+}
+
+// ── META ANUAL ──
+function salvarMeta() {
+  const v = parseInt(document.getElementById('meta-input')?.value)||0;
+  configs.metaAnual = v;
+  salvarConfig();
+  renderMeta();
+  gerStatus(`Meta definida: ${v} atividades`);
+}
+function renderMeta() {
+  const meta = configs.metaAnual || 0;
+  const conc = dados.filter(d=>d.sit==='Concluído').length;
+  const inp = document.getElementById('meta-input');
+  if(inp) inp.value = meta || '';
+  if(!meta) {
+    setEl('meta-pct', '—'); setEl('meta-sub', 'Configure uma meta para acompanhar o desempenho.');
+    const b = document.getElementById('meta-bar'); if(b) b.style.width='0%';
+    return;
+  }
+  const pct = Math.min(Math.round(conc/meta*100), 100);
+  setEl('meta-pct', `${conc} / ${meta} (${pct}%)`);
+  setEl('meta-sub', pct>=100 ? '🎉 Meta atingida!' : `Faltam ${meta-conc} atividades para a meta.`);
+  const b = document.getElementById('meta-bar');
+  if(b) { b.style.width=pct+'%'; b.style.background = pct>=100?'var(--green)':pct>=60?'var(--blue)':'var(--yellow)'; }
+}
+
+// ── NOTAS DO OPERADOR ──
+function salvarNotas() {
+  notasOperador = document.getElementById('notas-textarea')?.value || '';
+  salvarConfig();
+  const s = document.getElementById('notas-saved');
+  if(s) s.textContent = 'Salvo em ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+}
+function renderNotas() {
+  const el = document.getElementById('notas-textarea');
+  if(el) el.value = notasOperador;
+  const s = document.getElementById('notas-saved');
+  if(s) s.textContent = notasOperador ? 'Carregado do armazenamento local' : 'Não salvo';
+}
+
+// ── DRAG & DROP ──
+function handleDrop(e) {
+  e.preventDefault();
+  const dz = document.getElementById('drop-zone');
+  if(dz) { dz.style.borderColor='var(--border)'; dz.style.background='none'; }
+  const file = e.dataTransfer.files[0];
+  if(!file || !file.name.endsWith('.csv')) { gerStatus('Selecione um arquivo .csv'); return; }
+  processCSVFile(file);
+}
+function processCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const lines = ev.target.result.replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
+      const sep = lines[0].includes(';') ? ';' : ',';
+      const newItems = lines.slice(1).map((line,i)=>{
+        const cols = line.split(sep).map(c=>c.replace(/^"|"$/g,'').trim());
+        return {id:Date.now()+i, data:cols[0]||'', tipo:cols[1]||'', sigadoc:cols[2]||'',
+                risp:cols[3]||'', desc:cols[4]||'', ini:cols[5]||'', fim:cols[6]||'',
+                sit:cols[7]||'', obs:cols[8]||''};
+      }).filter(d=>d.data&&d.desc);
+      if(!newItems.length) { gerStatus('Nenhum registro válido no arquivo.'); return; }
+      if(confirm(`Importar ${newItems.length} registros?`)) {
+        dados = [...dados, ...newItems];
+        salvar(); renderAll();
+        gerStatus(`${newItems.length} registros importados com sucesso!`);
+      }
+    } catch(err) { gerStatus('Erro ao importar: '+err.message); }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// ── BACKUP JSON ──
+function exportarBackupJSON() {
+  const backup = { version:'2.0', timestamp: new Date().toISOString(), dados, tiposServico, configs, notasOperador };
+  const a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(backup,null,2));
+  a.download = 'backup_ciosp_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function restaurarBackup(e) {
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const b = JSON.parse(ev.target.result);
+      if(!confirm(`Restaurar backup de ${b.timestamp||'?'}? Os dados atuais serão substituídos.`)) return;
+      if(b.dados) dados = b.dados;
+      if(b.tiposServico) tiposServico = b.tiposServico;
+      if(b.configs) configs = Object.assign(configs, b.configs);
+      if(b.notasOperador !== undefined) notasOperador = b.notasOperador;
+      salvar(); salvarConfig(); renderAll();
+      gerStatus('Backup restaurado com sucesso!');
+    } catch(err) { gerStatus('Erro ao restaurar: '+err.message); }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ── MODELO CSV ──
+function baixarModelo() {
+  const csv = 'Data,Tipo de Serviço,Nº SIGADOC,RISP/Unidade,Descrição,Início,Término,Situação,Observações\n2026-04-11,Substituição de Baterias,PM-OFI-2026/99999,"RISP 1 – 10ª BPM (Cuiabá)",Substituição de 06 baterias unidade X,2026-04-11,,Concluído,';
+  downloadCSV(csv, 'modelo_importacao.csv');
+}
+
+// ── TABELA GERENCIAR ──
+function renderGerTable() {
+  const busca = (document.getElementById('ger-busca')?.value||'').toLowerCase();
+  const sitFil = (document.getElementById('ger-sit-fil')?.value||'');
+  let lista = dados;
+  if(sitFil) lista = lista.filter(d=> (d.sit||'')=== sitFil);
+  if(busca) lista = lista.filter(d=>
+    (d.tipo||'').toLowerCase().includes(busca)||
+    (d.risp||'').toLowerCase().includes(busca)||
+    (d.desc||'').toLowerCase().includes(busca)||
+    (d.sigadoc||'').toLowerCase().includes(busca)
+  );
+  lista = [...lista].sort((a,b)=>b.data.localeCompare(a.data));
+  setEl('ger-count', lista.length);
+  document.getElementById('ger-tbl-body').innerHTML = lista.map(d=>`
+    <tr>
+      <td class="td-date">${fmtDate(d.data)}</td>
+      <td style="max-width:140px;">${d.tipo||'—'}</td>
+      <td class="td-sig" style="font-size:10px;">${(d.sigadoc||'—').split('\n')[0]}</td>
+      <td style="max-width:130px;font-size:10px;">${d.risp||'—'}</td>
+      <td class="td-desc">${(d.desc||'—').slice(0,60)}${(d.desc||'').length>60?'…':''}</td>
+      <td>${badge(d.sit)}</td>
+      <td>
+        <div class="td-actions">
+          <button class="btn btn-sm" onclick="editarRegistro(${d.id})">✎</button>
+          <button class="btn btn-sm btn-danger" onclick="excluirRegistro(${d.id})">✕</button>
+        </div>
+      </td>
+    </tr>`).join('') || `<tr><td colspan="7" class="empty">Nenhum registro.</td></tr>`;
+}
+
+function updateGerenciar() {
+  const {total,conc,pend,agd,em} = calcStats();
+  setEl('ger-total', total);
+  setEl('ger-conc', conc);
+  setEl('ger-pend', pend);
+  setEl('ger-em', em);
+  setEl('ger-agd', agd);
+  if(dados.length) {
+    const last = [...dados].sort((a,b)=>b.data.localeCompare(a.data))[0];
+    setEl('ger-last', `Último registro: ${fmtDate(last.data)} — ${last.tipo}`);
+  }
+  renderTipoList();
+  renderConfigs();
+  renderMeta();
+  renderNotas();
+  populateModalTipos();
+  populateFiltroTipos();
+  renderGerTable();
+}
+
+function confirmarLimpar() {
+  if(confirm('Restaurar dados de demonstração? Os dados atuais serão substituídos.')) {
+    dados = DEMO.map(d=>({...d}));
+    salvar(); renderAll();
+    gerStatus('Dados restaurados para demonstração.');
+  }
+}
+
+// ═══════════════════════════════════════════
+// MODAL / CRUD
+// ═══════════════════════════════════════════
+function openModal(clear=true) {
+  if(clear) {
+    editIdx=null;
+    document.getElementById('modal-title').textContent='Nova atividade';
+    document.getElementById('edit-id').value='';
+    ['f-sigadoc','f-risp','f-desc','f-obs'].forEach(id=>{
+      document.getElementById(id).value='';
+    });
+    ['f-tipo','f-sit','f-sit2'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.selectedIndex=0;
+    });
+    ['f-ini','f-fim'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function editarRegistro(id) {
+  const d = dados.find(x=>x.id===id);
+  if(!d) return;
+  editIdx = id;
+  document.getElementById('modal-title').textContent = 'Editar atividade';
+  document.getElementById('edit-id').value = id;
+  document.getElementById('f-data').value = toISO(d.data)||'';
+  document.getElementById('f-tipo').value = d.tipo||'';
+  document.getElementById('f-sigadoc').value = d.sigadoc||'';
+  document.getElementById('f-risp').value = d.risp||'';
+  document.getElementById('f-sit').value = d.sit||'';
+  document.getElementById('f-desc').value = d.desc||'';
+  document.getElementById('f-ini').value = toISO(d.ini)||'';
+  document.getElementById('f-fim').value = toISO(d.fim)||'';
+  document.getElementById('f-obs').value = d.obs||'';
+  openModal(false);
+}
+
+function salvarRegistro() {
+  const data = document.getElementById('f-data').value;
+  const tipo = document.getElementById('f-tipo').value;
+  const desc = document.getElementById('f-desc').value.trim();
+  const sit  = document.getElementById('f-sit').value;
+  const risp = document.getElementById('f-risp').value.trim();
+  if(!data || !tipo || !desc || !risp) {
+    alert('Preencha os campos obrigatórios: Data, Tipo, RISP/Município e Descrição.');
+    return;
+  }
+  const reg = {
+    id: editIdx || Date.now(),
+    data, tipo, sit, risp, desc,
+    sigadoc: document.getElementById('f-sigadoc').value,
+    ini:     document.getElementById('f-ini').value,
+    fim:     document.getElementById('f-fim').value,
+    obs:     document.getElementById('f-obs').value,
+  };
+  if(editIdx) {
+    const i = dados.findIndex(x=>x.id===editIdx);
+    if(i>=0) dados[i]=reg;
+  } else {
+    dados.unshift(reg);
+  }
+  salvar();
+  closeModal();
+  renderAll();
+}
+
+function excluirRegistro(id) {
+  if(!confirm('Excluir este registro permanentemente?')) return;
+  dados = dados.filter(x=>x.id!==id);
+  salvar();
+  renderAll();
+}
+
+// ═══════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const el = document.getElementById('view-'+v);
+  if(el) el.classList.add('active');
+  const navEl = document.getElementById('nav-'+v);
+  if(navEl) navEl.classList.add('active');
+  if(v==='dashboard') renderDashboard();
+  if(v==='pendentes') renderPendentes();
+  if(v==='gerenciar') updateGerenciar();
+}
+
+// ═══════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════
+function buildCSVRows(lista) {
+  const h = ['Data','Tipo de Serviço','Nº SIGADOC/PRO','RISP/Unidade/Município','Descrição da Atividade','Início','Término','Situação','Observações'];
+  const rows = lista.map(d=>[d.data,d.tipo,d.sigadoc,d.risp,d.desc,d.ini,d.fim,d.sit,d.obs].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
+  return [h.join(','),...rows].join('\n');
+}
+
+function downloadCSV(csv, nome) {
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download = nome;
+  a.click();
+}
+
+function exportCSV() {
+  downloadCSV(buildCSVRows(dados), 'produtividade_ciosp_2026.csv');
+}
+
+function exportPendentesCSV() {
+  const pends = dados.filter(d=>d.sit==='Pendente'||d.sit==='Aguardando');
+  downloadCSV(buildCSVRows(pends), 'pendencias_ciosp_2026.csv');
+}
+
+function exportFiltradoCSV() {
+  const sit = document.getElementById('rel-sit').value;
+  const mes = document.getElementById('rel-mes').value;
+  let lista = dados;
+  if(sit) lista = lista.filter(d=>d.sit===sit);
+  if(mes) lista = lista.filter(d=>getMes(d)===mes);
+  if(!lista.length) { alert('Nenhum registro encontrado para os filtros selecionados.'); return; }
+  downloadCSV(buildCSVRows(lista), `produtividade_ciosp_2026_filtrado.csv`);
+}
+
+function importarCSV(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const lines = ev.target.result.replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
+      const newItems = lines.slice(1).map((line,i)=>{
+        const cols = line.match(/("(?:[^"]|"")*"|[^,]*),?/g).map(c=>{
+          let v = c.replace(/,$/,'').trim();
+          if(v.startsWith('"')&&v.endsWith('"')) v=v.slice(1,-1).replace(/""/g,'"');
+          return v;
+        });
+        return {id:Date.now()+i,data:cols[0]||'',tipo:cols[1]||'',sigadoc:cols[2]||'',risp:cols[3]||'',desc:cols[4]||'',ini:cols[5]||'',fim:cols[6]||'',sit:cols[7]||'',obs:cols[8]||''};
+      }).filter(d=>d.data&&d.desc);
+      if(!newItems.length) { alert('Nenhum registro válido encontrado no arquivo.'); return; }
+      if(confirm(`Importar ${newItems.length} registros? (serão adicionados aos existentes)`)) {
+        dados = [...dados, ...newItems];
+        salvar();
+        renderAll();
+        alert(`${newItems.length} registros importados com sucesso!`);
+      }
+    } catch(err) { alert('Erro ao importar: '+err.message); }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function imprimirRelatorio() {
+  const w = window.open('','_blank');
+  const {total,conc,pend,agd,em} = calcStats();
+  const rows = dados.sort((a,b)=>b.data.localeCompare(a.data)).map(d=>`
+    <tr>
+      <td>${fmtDate(d.data)}</td>
+      <td>${d.tipo||'—'}</td>
+      <td>${(d.sigadoc||'—').replace(/\n/g,'<br>')}</td>
+      <td>${d.risp||'—'}</td>
+      <td>${d.desc||'—'}</td>
+      <td>${fmtDate(d.ini)}</td>
+      <td>${fmtDate(d.fim)}</td>
+      <td>${d.sit||'—'}</td>
+      <td>${d.obs||'—'}</td>
+    </tr>`).join('');
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Relatório CIOSP 2026</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif;}
+    body{background:#fff;color:#000;padding:20px;font-size:11px;}
+    h1{font-size:16px;margin-bottom:4px;}h2{font-size:12px;color:#555;margin-bottom:16px;}
+    .stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+    .s{border:1px solid #ccc;border-radius:6px;padding:8px 14px;text-align:center;}
+    .s-v{font-size:22px;font-weight:700;}
+    .s-l{font-size:10px;color:#555;text-transform:uppercase;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:#f0f0f0;padding:6px;text-align:left;font-size:10px;border:1px solid #ccc;}
+    td{padding:5px 6px;border:1px solid #eee;font-size:10px;vertical-align:top;}
+    tr:nth-child(even) td{background:#fafafa;}
+    .footer{margin-top:16px;font-size:10px;color:#888;}
+    @media print{.no-print{display:none;}}
+  </style></head><body>
+  <button class="no-print" onclick="window.print()" style="margin-bottom:12px;padding:6px 14px;cursor:pointer;">⎙ Imprimir / Salvar PDF</button>
+  <h1>SECRETARIA DE ESTADO DE SEGURANÇA PÚBLICA — SESP/MT</h1>
+  <h2>Gerência de Radiocomunicação — CIOSP — Controle de Produtividade 2026</h2>
+  <div class="stats">
+    <div class="s"><div class="s-v">${total}</div><div class="s-l">Total</div></div>
+    <div class="s"><div class="s-v" style="color:#16a34a;">${conc}</div><div class="s-l">Concluído (${total?Math.round(conc/total*100):0}%)</div></div>
+    <div class="s"><div class="s-v" style="color:#ca8a04;">${pend}</div><div class="s-l">Pendente</div></div>
+    <div class="s"><div class="s-v" style="color:#2563eb;">${agd}</div><div class="s-l">Aguardando</div></div>
+    <div class="s"><div class="s-v" style="color:#dc2626;">${em}</div><div class="s-l">Em andamento</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Data</th><th>Tipo de Serviço</th><th>SIGADOC</th><th>RISP/Unidade</th><th>Descrição</th><th>Início</th><th>Término</th><th>Situação</th><th>Obs.</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="footer">Gerado em ${new Date().toLocaleString('pt-BR')} — Sistema CIOSP Produtividade 2026 — SESP/MT</div>
+  </body></html>`);
+  w.document.close();
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function setEl(id, val) {
+  const el = document.getElementById(id);
+  if(el) el.textContent = val;
+}
+
+// Fechar modal clicando fora
+document.getElementById('modal-overlay').addEventListener('click', e=>{
+  if(e.target===e.currentTarget) closeModal();
+});
+
+// ═══════════════════════════════════════════
+// MAPA LEAFLET — INTERATIVO
+// ═══════════════════════════════════════════
+const CITY_COORDS = {
+  'cuiabá':             [-15.601, -56.097],
+  'várzea grande':      [-15.647, -56.132],
+  'tangará da serra':   [-14.622, -57.487],
+  'barra do garças':    [-15.890, -52.256],
+  'primavera do leste': [-15.550, -54.283],
+  'rondonópolis':       [-16.470, -54.635],
+  'sinop':              [-11.865, -55.508],
+  'campo verde':        [-15.541, -55.167],
+  'lucas do rio verde': [-13.058, -55.913],
+  'comódoro':           [-13.661, -59.779],
+  'comodoro':           [-13.661, -59.779],
+  'nova brasilândia':   [-14.958, -55.022],
+  'cáceres':            [-16.066, -57.681],
+  'alta floresta':      [-9.871,  -56.085],
+  'sorriso':            [-12.546, -55.721],
+  'nova mutum':         [-13.831, -56.083],
+  'juara':              [-11.259, -57.524],
+  'colíder':            [-10.810, -55.454],
+  'chapada dos guimarães': [-15.460, -55.749],
+  'pontes e lacerda':   [-15.224, -59.333],
+  'água boa':           [-14.010, -52.148],
+  'guarantã do norte':  [-9.795,  -54.905],
+  'diamantino':         [-14.408, -56.445],
+  'barra do bugres':    [-15.068, -57.180],
+  'mirassol d\'oeste':  [-15.672, -58.097],
+  'querência':          [-12.613, -52.197],
+  'vila bela':          [-15.003, -59.950],
+  'brasnorte':          [-12.161, -58.021],
+};
+
+// Extrai cidade do campo risp (texto entre parênteses ou por palavra-chave)
+function extractCity(risp) {
+  if(!risp) return null;
+  const m = risp.match(/\(([^)]+)\)/);
+  if(m) return m[1].trim().toLowerCase();
+  // fallback: tenta nomes conhecidos diretamente no texto
+  const r = risp.toLowerCase();
+  for(const c of Object.keys(CITY_COORDS)) {
+    if(r.includes(c)) return c;
+  }
+  return null;
+}
+
+// Cor por situação
+function sitColor(sit) {
+  if(!sit) return '#8b949e';
+  const s = sit.toLowerCase();
+  if(s.includes('conclu')) return '#3fb950';
+  if(s.includes('pend'))   return '#d29910';
+  if(s.includes('aguard')) return '#e3b341';
+  return '#f47068'; // em andamento
+}
+
+// Prioridade para cor dominante da cidade
+function sitPriority(sit) {
+  if(!sit) return 0;
+  const s = sit.toLowerCase();
+  if(s.includes('pend'))   return 4;
+  if(s.includes('aguard')) return 3;
+  if(s.includes('andamento')) return 2;
+  return 1; // concluído
+}
+
+let leafletMap = null;
+let leafletMarkers = [];
+
+function initLeafletMap() {
+  if(leafletMap) return; // já inicializado
+  leafletMap = L.map('leaflet-map', {
+    center: [-13.5, -55.8],
+    zoom: 6,
+    zoomControl: true,
+    attributionControl: true,
+  });
+
+  // Tiles dark (CartoDB Dark Matter)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(leafletMap);
+}
+
+function renderLeafletMap() {
+  if(!document.getElementById('leaflet-map')) return;
+  initLeafletMap();
+
+  // Remove marcadores antigos
+  leafletMarkers.forEach(m => leafletMap.removeLayer(m));
+  leafletMarkers = [];
+
+  // Agrupa atividades por cidade
+  const cidades = {};
+  dados.forEach(d => {
+    const city = extractCity(d.risp);
+    if(!city || !CITY_COORDS[city]) return;
+    if(!cidades[city]) cidades[city] = { name: d.risp?.match(/\(([^)]+)\)/)?.[1] || city, items: [], coords: CITY_COORDS[city] };
+    cidades[city].items.push(d);
+  });
+
+  let totalCidades = 0;
+
+  Object.entries(cidades).forEach(([key, c]) => {
+    totalCidades++;
+    // Cor dominante = status de maior prioridade
+    const dominant = c.items.reduce((best, d) => sitPriority(d.sit) > sitPriority(best.sit) ? d : best, c.items[0]);
+    const color = sitColor(dominant.sit);
+    const count = c.items.length;
+
+    // Marcador elegante: ponto central + anel pulsante + badge de contagem
+    const badge = count > 1
+      ? `<div style="position:absolute;top:-5px;right:-5px;background:#0d1117;border:1px solid ${color};border-radius:8px;padding:0 4px;font-size:9px;font-weight:700;color:${color};line-height:14px;min-width:14px;text-align:center;">${count}</div>`
+      : '';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="position:relative;width:20px;height:20px;">
+        <!-- anel externo pulsante -->
+        <div style="
+          position:absolute;inset:-4px;
+          border-radius:50%;
+          border:1.5px solid ${color}55;
+          animation:mapPulse 2.4s ease-out infinite;
+        "></div>
+        <!-- ponto central sólido -->
+        <div style="
+          position:absolute;inset:4px;
+          background:${color};
+          border-radius:50%;
+          box-shadow:0 0 6px ${color}99;
+        "></div>
+        ${badge}
+      </div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    });
+
+    const marker = L.marker(c.coords, { icon }).addTo(leafletMap);
+
+    // Popup com lista de atividades
+    const rows = c.items.map(d => `
+      <div class="map-pop-row">
+        <div class="map-pop-dot" style="background:${sitColor(d.sit)};"></div>
+        <div>
+          <div style="font-weight:600;color:#e6edf3;">${d.tipo}</div>
+          <div style="color:#8b949e;font-size:10px;">${fmtDate(d.data)}${d.sigadoc ? ' · '+d.sigadoc.split('\n')[0] : ''}</div>
+          <div style="color:#c9d1d9;font-size:10px;margin-top:2px;">${d.desc?.slice(0,80)}${d.desc?.length>80?'…':''}</div>
+        </div>
+      </div>`).join('');
+
+    marker.bindPopup(`
+      <div class="map-pop-title">📍 ${c.name}</div>
+      <div style="font-size:10px;color:#8b949e;margin-bottom:6px;">${count} atividade${count>1?'s':''}</div>
+      ${rows}
+    `, { maxWidth: 280 });
+
+    // Tooltip ao hover
+    marker.bindTooltip(`<b>${c.name}</b><br>${count} atividade${count>1?'s':''}`, {
+      direction: 'top', offset: [0, -8],
+      className: 'leaflet-popup-content-wrapper',
+    });
+
+    leafletMarkers.push(marker);
+  });
+
+  // Contadores
+  const {total, conc, pend, agd, em} = calcStats();
+  const mc = document.getElementById('map-counters');
+  if(mc) mc.innerHTML = `
+    <div class="mc-item"><div class="mc-val" style="color:#3fb950;">${conc}</div><div class="mc-lbl">Concluído</div></div>
+    <div class="mc-item"><div class="mc-val" style="color:#d29910;">${pend}</div><div class="mc-lbl">Pendente</div></div>
+    <div class="mc-item"><div class="mc-val" style="color:#f47068;">${em}</div><div class="mc-lbl">Andamento</div></div>
+    <div class="mc-item"><div class="mc-val" style="color:#e3b341;">${agd}</div><div class="mc-lbl">Aguardando</div></div>
+    <div class="mc-item"><div class="mc-val" style="color:#58a6ff;">${totalCidades}</div><div class="mc-lbl">Municípios</div></div>
+  `;
+
+  // Força resize para renderizar corretamente
+  setTimeout(() => leafletMap.invalidateSize(), 100);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function init() {
+  const updateTime=()=>{ document.getElementById('tb-date').textContent=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}); };
+  updateTime(); setInterval(updateTime,60000);
+
+  carregar();
+  carregarConfig();
+  populateModalTipos();
+  populateFiltroTipos();
+  renderAll();
+  showView('atividades');
+}
+
+// Inicializa o mapa quando o Dashboard estiver visível
+const _origShowView = showView;
+// Patch showView para renderizar mapa ao entrar no dashboard
+window.showView = function(v) {
+  _origShowView(v);
+  if(v === 'dashboard') {
+    setTimeout(renderLeafletMap, 150);
+  }
+};
+
+init();
+</script>
+</body>
+</html>
