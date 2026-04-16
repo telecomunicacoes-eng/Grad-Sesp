@@ -2315,12 +2315,7 @@ td{padding:5px 8px;vertical-align:middle;font-size:9.5px}
   <div class="gov-title">
     <div class="gov-top">Estado de Mato Grosso &mdash; Poder Executivo</div>
     <div class="gov-main">Secretaria de Estado de Seguran&ccedil;a P&uacute;blica &mdash; SESP/MT</div>
-    <div class="gov-sub">CIOSP &mdash; Ger&ecirc;ncia de Radiocomunica&ccedil;&atilde;o &mdash; GRAD &mdash; Rede TETRA/N&Eacute;BULA</div>
-  </div>
-  <div class="doc-meta">
-    <div>N&ordm;: NEBULA/${new Date().getFullYear()}/${String(Math.floor(Math.random()*9000)+1000)}</div>
-    <div>Emitido em: ${new Date().toLocaleString('pt-BR')}</div>
-    <div>Classifica&ccedil;&atilde;o: INTERNO</div>
+    <div class="gov-sub">CIOSP &mdash; Telecomunica&ccedil;&atilde;o &mdash; GRAD</div>
   </div>
 </div>
 <div class="doc-title"><span class="doc-opcty">${pctOp}% OPERACIONAL</span>${tipoLabel}</div>
@@ -2364,7 +2359,7 @@ ${_secResolvidos}
     +'var D=window.__D;'
     +'if(!D||typeof Chart==="undefined")return;'
     +'new Chart(document.getElementById("c-status"),{type:"doughnut",plugins:[_dl],data:{labels:["Operando","Inoperante","Parcial","Modo Local","Inst\\u00e1vel"],datasets:[{data:[D.op,D.inopCnt,D.parcCnt,D.mlCnt,D.instCnt],backgroundColor:["#22c55e","#ef4444","#fbbf24","#a78bfa","#fb923c"],borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{bottom:2}},plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:11,padding:6}}}}});'
-    +'if(D.tf&&D.tf.length)new Chart(document.getElementById("c-motivos"),{type:"bar",plugins:[_dl],data:{labels:D.tf.map(function(e){return e[0];}),datasets:[{data:D.tf.map(function(e){return e[1];}),backgroundColor:"#3b82f6",borderRadius:4,barThickness:14}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,layout:{padding:{right:40,top:4,bottom:4}},plugins:{legend:{display:false}},scales:{x:{display:false,ticks:{font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10},color:"#374151"},grid:{display:false}}}}});'
+    +'if(D.tf&&D.tf.length)new Chart(document.getElementById("c-motivos"),{type:"bar",plugins:[_dl],data:{labels:D.tf.map(function(e){return e[0];}),datasets:[{data:D.tf.map(function(e){return e[1];}),backgroundColor:"#3b82f6",borderRadius:4,barThickness:15}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,layout:{padding:{right:44,top:2,bottom:2,left:2}},plugins:{legend:{display:false}},scales:{x:{display:false,grid:{display:false}},y:{afterFit:function(a){a.width=178;},ticks:{font:{size:9.5},color:"#1a1a2e"},grid:{display:false}}}}});'
     +'if(D.risp&&D.risp.length)new Chart(document.getElementById("c-risp"),{type:"bar",plugins:[_dl],data:{labels:D.risp.map(function(x){return x.r.replace("RISP ","R");}),datasets:[{label:"Inop",data:D.risp.map(function(x){return x.ni;}),backgroundColor:"#ef4444",barThickness:10},{label:"M.Local",data:D.risp.map(function(x){return x.nm;}),backgroundColor:"#a78bfa",barThickness:10},{label:"Parcial",data:D.risp.map(function(x){return x.np;}),backgroundColor:"#fbbf24",barThickness:10}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"right",labels:{font:{size:9},boxWidth:10,padding:5}}},scales:{x:{stacked:true,ticks:{font:{size:8}},grid:{color:"rgba(0,0,0,.05)"}},y:{stacked:true,beginAtZero:true,ticks:{stepSize:1,font:{size:8}}}}}});'
     +'setTimeout(function(){window.print();},1500);'
     +'}<'+'/scr'+'ipt>');
