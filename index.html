@@ -2246,77 +2246,84 @@ function gerarPDF(){
     _secResolvidos='<div class="section"><div class="section-title">'+(relTipo==='geral'?'3.':'1.')+' Ocorr\u00eancias Resolvidas <span class="sec-count">'+resolvidos.length+' total</span></div>'
       +'<table><thead><tr><th>SBS / Site</th><th>RISP</th><th>Motivo</th><th>GLPI</th><th>In\u00edcio</th><th>Conclus\u00e3o</th><th>Dura\u00e7\u00e3o</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
-  const w=window.open('','_blank');
+  const w=window.open('','_blank','width=900,height=700,scrollbars=yes');
   if(!w){alert('Popup bloqueado! Permita popups para este site e tente novamente.');return;}
   w.document.open();
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${tipoLabel} \u2014 NEBULA \u2014 SESP/MT</title><style>
-@page{size:A4;margin:1.6cm 1.6cm 1.8cm}
+@page{size:A4 portrait;margin:1.8cm 2cm 2cm}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Calibri,Arial,sans-serif;font-size:11px;color:#1a1a2e;background:#fff;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.gov-header{display:flex;align-items:center;gap:16px;padding-bottom:12px;border-bottom:3px solid #0f2044;margin-bottom:14px}
-.gov-title{flex:1}
-.gov-top{font-size:9px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
-.gov-main{font-size:15px;font-weight:700;color:#0f2044;line-height:1.2}
-.gov-sub{font-size:11px;color:#1a6fd4;font-weight:600;margin-top:2px}
-.doc-title{text-align:center;background:#0f2044;color:#fff;margin:0 0 8px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:11px 18px;border-radius:5px}
-.doc-period{text-align:center;font-size:11px;color:#666;margin-bottom:3px}
-.doc-date{text-align:center;font-size:11px;color:#999;margin-bottom:16px}
-.doc-opcty{float:right;background:#34d399;color:#064e3b;font-size:13px;font-weight:700;padding:5px 14px;border-radius:4px;margin-top:-2px}
-.kpi-row{display:flex;gap:8px;margin-bottom:16px}
-.kpi-box{flex:1;border-radius:7px;padding:11px 8px 10px;text-align:center;border:1px solid #e5e7eb;position:relative;overflow:hidden;background:#fff}
-.kpi-box::after{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+html,body{background:#e8e8e8;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Segoe UI',Calibri,Arial,sans-serif;font-size:11px;color:#1a1a2e;line-height:1.5}
+.page{width:174mm;min-height:257mm;background:#fff;margin:0 auto;padding:0}
+.gov-header{display:flex;align-items:flex-start;gap:14px;padding-bottom:10px;border-bottom:3px solid #0f2044;margin-bottom:14px}
+.gov-title{flex:1;min-width:0}
+.gov-top{font-size:8.5px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.gov-main{font-size:14px;font-weight:700;color:#0f2044;line-height:1.2}
+.gov-sub{font-size:10px;color:#1a6fd4;font-weight:600;margin-top:2px}
+.doc-meta{text-align:right;font-size:9px;color:#666;flex-shrink:0;white-space:nowrap}
+.doc-title{text-align:center;background:#0f2044;color:#fff;margin:0 0 7px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:10px 16px;border-radius:5px;overflow:hidden}
+.doc-opcty{float:right;background:#34d399;color:#064e3b;font-size:12px;font-weight:700;padding:4px 12px;border-radius:4px;margin-top:-1px}
+.doc-period{text-align:center;font-size:10.5px;color:#555;margin-bottom:2px}
+.doc-date{text-align:center;font-size:10px;color:#999;margin-bottom:14px}
+.kpi-row{display:flex;gap:6px;margin-bottom:14px}
+.kpi-box{flex:1;border-radius:6px;padding:9px 5px 8px;text-align:center;border:1px solid #e5e7eb;position:relative;overflow:hidden;background:#fff}
+.kpi-box::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .kpi-box.blue::after{background:#1a6fd4}.kpi-box.green::after{background:#059669}.kpi-box.red::after{background:#dc2626}
 .kpi-box.yellow::after{background:#d97706}.kpi-box.purple::after{background:#7c3aed}.kpi-box.orange::after{background:#ea580c}
-.kpi-lbl{font-size:8.5px;color:#777;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;font-weight:600}
-.kpi-val{font-size:26px;font-weight:800;color:#0f2044;line-height:1}
-.kpi-pct{font-size:11px;font-weight:700;margin-top:3px}
+.kpi-lbl{font-size:7.5px;color:#777;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;font-weight:600}
+.kpi-val{font-size:22px;font-weight:800;color:#0f2044;line-height:1}
+.kpi-pct{font-size:10px;font-weight:700;margin-top:2px}
 .kpi-box.blue .kpi-pct{color:#1a6fd4}.kpi-box.green .kpi-pct{color:#059669}.kpi-box.red .kpi-pct{color:#dc2626}
 .kpi-box.yellow .kpi-pct{color:#d97706}.kpi-box.purple .kpi-pct{color:#7c3aed}.kpi-box.orange .kpi-pct{color:#ea580c}
-.kpi-bar{height:4px;background:#f0f0f0;border-radius:2px;margin-top:6px;overflow:hidden}
+.kpi-bar{height:3px;background:#f0f0f0;border-radius:2px;margin-top:5px;overflow:hidden}
 .kpi-bar-fill{height:100%;border-radius:2px}
 .kpi-box.blue .kpi-bar-fill{background:#1a6fd4}.kpi-box.green .kpi-bar-fill{background:#059669}.kpi-box.red .kpi-bar-fill{background:#dc2626}
 .kpi-box.yellow .kpi-bar-fill{background:#d97706}.kpi-box.purple .kpi-bar-fill{background:#7c3aed}.kpi-box.orange .kpi-bar-fill{background:#ea580c}
-.charts-section{display:grid;grid-template-columns:215px 1fr;gap:14px;margin-bottom:18px;page-break-inside:avoid}
-.chart-box{border:1px solid #dde3f0;border-radius:8px;padding:12px;background:#fff;height:210px;display:flex;flex-direction:column}.chart-box canvas{flex:1;min-height:0}
-.chart-box-risp{border:1px solid #dde3f0;border-radius:8px;padding:12px;background:#fff;height:150px;display:flex;flex-direction:column;margin-bottom:18px;page-break-inside:avoid}.chart-box-risp canvas{flex:1;min-height:0}
-.chart-title{font-size:10px;font-weight:700;color:#0f2044;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;flex-shrink:0}
-.section{margin-bottom:18px;page-break-inside:avoid}
-.section-title{font-size:11px;font-weight:700;color:#fff;background:#0f2044;padding:8px 13px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:0;border-radius:4px 4px 0 0;display:flex;justify-content:space-between;align-items:center}
-.sec-count{font-size:9.5px;font-weight:500;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:8px;text-transform:none;letter-spacing:0}
-table{width:100%;border-collapse:collapse;font-size:10px;border:1px solid #dde3f0;border-top:none}
-thead th{padding:7px 9px;text-align:left;font-size:9px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;background:#f1f5fb;color:#374151;border-bottom:1px solid #dde3f0}
+.charts-section{display:grid;grid-template-columns:180px 1fr;gap:12px;margin-bottom:14px;page-break-inside:avoid}
+.chart-box{border:1px solid #dde3f0;border-radius:8px;padding:10px;background:#fff;height:200px;display:flex;flex-direction:column}.chart-box canvas{flex:1;min-height:0;width:100%!important}
+.chart-box-risp{border:1px solid #dde3f0;border-radius:8px;padding:10px;background:#fff;height:130px;display:flex;flex-direction:column;margin-bottom:14px;page-break-inside:avoid}.chart-box-risp canvas{flex:1;min-height:0;width:100%!important}
+.chart-title{font-size:9.5px;font-weight:700;color:#0f2044;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;flex-shrink:0}
+.section{margin-bottom:14px;page-break-inside:avoid}
+.section-title{font-size:10.5px;font-weight:700;color:#fff;background:#0f2044;padding:7px 12px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:0;border-radius:4px 4px 0 0;display:flex;justify-content:space-between;align-items:center}
+.sec-count{font-size:9px;font-weight:500;background:rgba(255,255,255,.2);padding:2px 7px;border-radius:8px;text-transform:none;letter-spacing:0}
+table{width:100%;border-collapse:collapse;font-size:9.5px;border:1px solid #dde3f0;border-top:none}
+thead th{padding:6px 8px;text-align:left;font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;background:#f1f5fb;color:#374151;border-bottom:1px solid #dde3f0}
 tbody tr{border-bottom:1px solid #eef2f7}
 tbody tr:nth-child(even){background:#f7f9fd}
-td{padding:7px 9px;vertical-align:middle}
-.risp-s{display:inline-block;padding:2px 7px;background:#e8edf5;border-radius:3px;font-size:9px;color:#0f2044;font-weight:700}
-.days-s{display:inline-block;padding:3px 8px;border-radius:8px;font-size:9.5px;font-weight:700}
+td{padding:5px 8px;vertical-align:middle;font-size:9.5px}
+.risp-s{display:inline-block;padding:2px 6px;background:#e8edf5;border-radius:3px;font-size:8.5px;color:#0f2044;font-weight:700}
+.days-s{display:inline-block;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700}
 .days-crit{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
 .days-warn{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
 .days-ok{background:#f0fdf4;color:#0d6e3f;border:1px solid #bbf7d0}
-.muted{color:#777;font-size:9.5px}
-.footer{margin-top:18px;padding-top:9px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:9px;color:#aaa}
-.sign-area{margin-top:32px;display:flex;justify-content:center}
-.sign-box{text-align:center;border-top:1px solid #333;padding-top:6px;min-width:220px;font-size:11px;color:#444}
+.muted{color:#777;font-size:9px}
+.footer{margin-top:16px;padding-top:8px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:8.5px;color:#aaa}
+.sign-area{margin-top:28px;display:flex;justify-content:center}
+.sign-box{text-align:center;border-top:1px solid #333;padding-top:5px;min-width:200px;font-size:10px;color:#444}
+@media screen{.page{box-shadow:0 2px 16px rgba(0,0,0,.18);padding:1.8cm 2cm 2cm}}
 @media print{
+  html,body{background:#fff}
+  .page{width:100%;padding:0;box-shadow:none;margin:0}
   tr{page-break-inside:avoid}
   table{page-break-inside:auto}
   .section{page-break-inside:avoid}
-  .charts-section{page-break-inside:avoid}
+  .charts-section,.chart-box-risp{page-break-inside:avoid}
 }
 </style></head><body>
+<div class="page">
 <div class="gov-header">
   <div class="gov-title">
     <div class="gov-top">Estado de Mato Grosso &mdash; Poder Executivo</div>
     <div class="gov-main">Secretaria de Estado de Seguran&ccedil;a P&uacute;blica &mdash; SESP/MT</div>
     <div class="gov-sub">CIOSP &mdash; Ger&ecirc;ncia de Radiocomunica&ccedil;&atilde;o &mdash; GRAD &mdash; Rede TETRA/N&Eacute;BULA</div>
   </div>
-  <div style="text-align:right;font-size:9px;color:#666;flex-shrink:0">
+  <div class="doc-meta">
     <div>N&ordm;: NEBULA/${new Date().getFullYear()}/${String(Math.floor(Math.random()*9000)+1000)}</div>
     <div>Emitido em: ${new Date().toLocaleString('pt-BR')}</div>
     <div>Classifica&ccedil;&atilde;o: INTERNO</div>
   </div>
 </div>
-<div class="doc-title"><span class="doc-opcty">${pctOp}% operacional</span>${tipoLabel}</div>
+<div class="doc-title"><span class="doc-opcty">${pctOp}% OPERACIONAL</span>${tipoLabel}</div>
 <div class="doc-period">Per&iacute;odo: ${periodoLabel()}</div>
 <div class="doc-date">${dataHoje}</div>
 <div class="kpi-row">
@@ -2339,6 +2346,7 @@ ${_secOutros}
 ${_secResolvidos}
 <div class="sign-area"><div class="sign-box">___________________________<br>GRAD / Ger&ecirc;ncia de Radiocomunica&ccedil;&atilde;o<br>CIOSP &mdash; SESP/MT</div></div>
 <div class="footer"><span>Documento gerado automaticamente pelo sistema NEBULA Monitor &mdash; SESP/MT &mdash; GRAD/Telecomunica&ccedil;&otilde;es</span><span>Emitido: ${new Date().toLocaleString('pt-BR')}</span></div>
+</div>
 </body></html>`);
   w.document.write('<scr'+'ipt>window.__D='+_dj+';<'+'/scr'+'ipt>');
   w.document.write('<scr'+'ipt>function __buildC(){'
