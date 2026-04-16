@@ -2276,8 +2276,9 @@ body{font-family:'Segoe UI',Calibri,Arial,sans-serif;font-size:11px;color:#1a1a2
 .kpi-bar-fill{height:100%;border-radius:2px}
 .kpi-box.blue .kpi-bar-fill{background:#1a6fd4}.kpi-box.green .kpi-bar-fill{background:#059669}.kpi-box.red .kpi-bar-fill{background:#dc2626}
 .kpi-box.yellow .kpi-bar-fill{background:#d97706}.kpi-box.purple .kpi-bar-fill{background:#7c3aed}.kpi-box.orange .kpi-bar-fill{background:#ea580c}
-.charts-section{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px;page-break-inside:avoid}
-.chart-box{border:1px solid #dde3f0;border-radius:8px;padding:12px;background:#fff;height:190px;display:flex;flex-direction:column}.chart-box canvas{flex:1;min-height:0}
+.charts-section{display:grid;grid-template-columns:215px 1fr;gap:14px;margin-bottom:18px;page-break-inside:avoid}
+.chart-box{border:1px solid #dde3f0;border-radius:8px;padding:12px;background:#fff;height:210px;display:flex;flex-direction:column}.chart-box canvas{flex:1;min-height:0}
+.chart-box-risp{border:1px solid #dde3f0;border-radius:8px;padding:12px;background:#fff;height:150px;display:flex;flex-direction:column;margin-bottom:18px;page-break-inside:avoid}.chart-box-risp canvas{flex:1;min-height:0}
 .chart-title{font-size:10px;font-weight:700;color:#0f2044;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;flex-shrink:0}
 .section{margin-bottom:18px;page-break-inside:avoid}
 .section-title{font-size:11px;font-weight:700;color:#fff;background:#0f2044;padding:8px 13px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:0;border-radius:4px 4px 0 0;display:flex;justify-content:space-between;align-items:center}
@@ -2329,8 +2330,8 @@ td{padding:7px 9px;vertical-align:middle}
 <div class="charts-section">
   <div class="chart-box"><div class="chart-title">Distribui&ccedil;&atilde;o de Status</div><canvas id="c-status"></canvas></div>
   <div class="chart-box"><div class="chart-title">Motivos de Falha (Top 8)</div><canvas id="c-motivos"></canvas></div>
-  <div class="chart-box"><div class="chart-title">Problemas por RISP</div><canvas id="c-risp"></canvas></div>
 </div>
+<div class="chart-box-risp"><div class="chart-title">Problemas por RISP</div><canvas id="c-risp"></canvas></div>
 ${_motivosHTML}
 ${_rispHTML}
 ${_secInop}
@@ -2349,14 +2350,14 @@ ${_secResolvidos}
     +'var x=el.x+r*Math.cos(angle),y=el.y+r*Math.sin(angle);'
     +'if(el.outerRadius-el.innerRadius>16){ctx.font="bold 10px sans-serif";ctx.fillStyle="#fff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(v,x,y);}'
     +'} else if(type==="bar"){var horiz=chart.options.indexAxis==="y";'
-    +'if(horiz){ctx.font="bold 9px sans-serif";ctx.fillStyle="#1e40af";ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(v,el.x+4,el.y);}'
-    +'else{var h=Math.abs(el.y-el.base);if(h>12){ctx.font="bold 8px sans-serif";ctx.fillStyle="#fff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(v,el.x,(el.y+el.base)/2);}}'
+    +'if(horiz){ctx.font="bold 11px sans-serif";ctx.fillStyle="#0f2044";ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(v,el.x+6,el.y);}'
+    +'else{var h=Math.abs(el.y-el.base);if(h>12){ctx.font="bold 9px sans-serif";ctx.fillStyle="#fff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(v,el.x,(el.y+el.base)/2);}}'
     +'}ctx.restore();});});}};'
     +'var D=window.__D;'
     +'if(!D||typeof Chart==="undefined")return;'
-    +'new Chart(document.getElementById("c-status"),{type:"doughnut",plugins:[_dl],data:{labels:["Operando","Inoperante","Parcial","Modo Local","Inst\\u00e1vel"],datasets:[{data:[D.op,D.inopCnt,D.parcCnt,D.mlCnt,D.instCnt],backgroundColor:["#22c55e","#ef4444","#fbbf24","#a78bfa","#fb923c"],borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:11,padding:7}}}}});'
-    +'if(D.tf&&D.tf.length)new Chart(document.getElementById("c-motivos"),{type:"bar",plugins:[_dl],data:{labels:D.tf.map(function(e){return e[0];}),datasets:[{data:D.tf.map(function(e){return e[1];}),backgroundColor:"#3b82f6",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}},grid:{color:"rgba(0,0,0,.06)"}},y:{ticks:{font:{size:9}}}}}});'
-    +'if(D.risp&&D.risp.length)new Chart(document.getElementById("c-risp"),{type:"bar",plugins:[_dl],data:{labels:D.risp.map(function(x){return x.r.replace("RISP ","R");}),datasets:[{label:"Inop",data:D.risp.map(function(x){return x.ni;}),backgroundColor:"#ef4444"},{label:"M.Local",data:D.risp.map(function(x){return x.nm;}),backgroundColor:"#a78bfa"},{label:"Parcial",data:D.risp.map(function(x){return x.np;}),backgroundColor:"#fbbf24"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:9},boxWidth:10,padding:5}}},scales:{x:{stacked:true,ticks:{font:{size:8}}},y:{stacked:true,beginAtZero:true,ticks:{stepSize:1,font:{size:8}}}}}});'
+    +'new Chart(document.getElementById("c-status"),{type:"doughnut",plugins:[_dl],data:{labels:["Operando","Inoperante","Parcial","Modo Local","Inst\\u00e1vel"],datasets:[{data:[D.op,D.inopCnt,D.parcCnt,D.mlCnt,D.instCnt],backgroundColor:["#22c55e","#ef4444","#fbbf24","#a78bfa","#fb923c"],borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{bottom:2}},plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:11,padding:6}}}}});'
+    +'if(D.tf&&D.tf.length)new Chart(document.getElementById("c-motivos"),{type:"bar",plugins:[_dl],data:{labels:D.tf.map(function(e){return e[0];}),datasets:[{data:D.tf.map(function(e){return e[1];}),backgroundColor:"#3b82f6",borderRadius:4,barThickness:14}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,layout:{padding:{right:40,top:4,bottom:4}},plugins:{legend:{display:false}},scales:{x:{display:false,ticks:{font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10},color:"#374151"},grid:{display:false}}}}});'
+    +'if(D.risp&&D.risp.length)new Chart(document.getElementById("c-risp"),{type:"bar",plugins:[_dl],data:{labels:D.risp.map(function(x){return x.r.replace("RISP ","R");}),datasets:[{label:"Inop",data:D.risp.map(function(x){return x.ni;}),backgroundColor:"#ef4444",barThickness:10},{label:"M.Local",data:D.risp.map(function(x){return x.nm;}),backgroundColor:"#a78bfa",barThickness:10},{label:"Parcial",data:D.risp.map(function(x){return x.np;}),backgroundColor:"#fbbf24",barThickness:10}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"right",labels:{font:{size:9},boxWidth:10,padding:5}}},scales:{x:{stacked:true,ticks:{font:{size:8}},grid:{color:"rgba(0,0,0,.05)"}},y:{stacked:true,beginAtZero:true,ticks:{stepSize:1,font:{size:8}}}}}});'
     +'setTimeout(function(){window.print();},1500);'
     +'}<'+'/scr'+'ipt>');
 
