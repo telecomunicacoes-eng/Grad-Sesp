@@ -2229,16 +2229,19 @@ function gerarPDF(){
     let rows='';
     allO.forEach(r=>{
       const s=getSite(r.sbs)||{nome:'SBS '+r.sbs,risp:'\u2014'};
+      const d=diffDays(r.inicio);
+      const dc=d>7?'days-crit':d>3?'days-warn':'days-ok';
       rows+='<tr><td><strong>'+r.sbs+'</strong><br><span class="muted">'+s.nome+'</span></td>'
         +'<td><span class="risp-s">'+s.risp+'</span></td>'
         +'<td>'+r.situacao+'</td>'
+        +'<td><span class="days-s '+dc+'">'+d+'d</span></td>'
         +'<td>'+(r.motivo||'\u2014')+'</td>'
         +'<td>'+(r.acao||'\u2014')+'</td>'
         +'<td>'+(r.inicio||'\u2014')+'</td>'
         +'<td>'+(r.prazo||'\u2014')+'</td></tr>';
     });
     _secOutros='<div class="section"><div class="section-title">2. Outros Status Ativos <span class="sec-count">'+allO.length+' total</span></div>'
-      +'<table><thead><tr><th>SBS / Site</th><th>RISP</th><th>Situa\u00e7\u00e3o</th><th>Motivo</th><th>A\u00e7\u00e3o</th><th>In\u00edcio</th><th>Previs\u00e3o</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+      +'<table><thead><tr><th>SBS / Site</th><th>RISP</th><th>Situa\u00e7\u00e3o</th><th>Dias</th><th>Motivo</th><th>A\u00e7\u00e3o</th><th>In\u00edcio</th><th>Previs\u00e3o</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
   let _secResolvidos='';
   if((relTipo==='geral'||relTipo==='resolvidos')&&resolvidos.length){
