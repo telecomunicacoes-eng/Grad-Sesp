@@ -2255,7 +2255,7 @@ function gerarPDF(){
         +'<td>'+(r.glpi||'\u2014')+'</td>'
         +'<td>'+(r.inicio||'\u2014')+'</td>'
         +'<td>'+(r.conclusao||'\u2014')+'</td>'
-        +'<td>'+(dias>0?dias+'d':'\u2014')+'</td></tr>';
+        +'<td>'+(dias>0?'<span class="days-s '+(dias>30?'days-crit':dias>7?'days-warn':'days-ok')+'">'+dias+'d</span>':'\u2014')+'</td></tr>';
     });
     _secResolvidos='<div class="section"><div class="section-title">'+(relTipo==='geral'?'3.':'1.')+' Ocorr\u00eancias Resolvidas <span class="sec-count">'+resolvidos.length+' total</span></div>'
       +'<table><thead><tr><th>SBS / Site</th><th>RISP</th><th>Motivo</th><th>GLPI</th><th>In\u00edcio</th><th>Conclus\u00e3o</th><th>Dura\u00e7\u00e3o</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
