@@ -98,12 +98,21 @@
 .mlp-section{padding:11px 13px;border-bottom:1px solid var(--border)}
 .mlp-title{font-size:13px;letter-spacing:.12em;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:7px}
 .mlp-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
-.mlp-chip{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:16px;font-family:var(--mono);transition:all .18s;background:rgba(255,255,255,.02);user-select:none;white-space:nowrap}
+.mlp-chip{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-family:var(--mono);transition:all .18s;background:rgba(255,255,255,.02);user-select:none;white-space:nowrap;overflow:hidden}
 .mlp-chip:hover{background:rgba(255,255,255,.05)}
 .mlp-chip.active{border-color:currentColor;background:rgba(var(--chip-rgb),.1)}
 .mlp-chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.mlp-chip-lbl{flex:1}
-.mlp-chip-cnt{font-size:13px;background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px;min-width:18px;text-align:center}
+.mlp-chip-lbl{flex:1;overflow:hidden;text-overflow:ellipsis}
+.mlp-chip-cnt{font-size:12px;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;min-width:18px;text-align:center;flex-shrink:0;font-weight:600}
+/* RISP Summary Card */
+.mlp-risp-summary{background:rgba(36,133,245,.07);border:1px solid rgba(36,133,245,.25);border-radius:8px;padding:10px 12px;margin-top:2px}
+.mlp-rs-title{font-size:12px;font-family:var(--mono);color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.mlp-rs-total{font-size:11px;font-family:var(--mono);color:var(--text3)}
+.mlp-rs-row{display:flex;align-items:center;gap:7px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.mlp-rs-row:last-child{border-bottom:none}
+.mlp-rs-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.mlp-rs-lbl{font-size:12px;color:var(--text2);flex:1;font-family:var(--mono)}
+.mlp-rs-num{font-size:13px;font-family:var(--mono);font-weight:700}
 .c-op-chip{color:#10b981;--chip-rgb:16,185,129}
 .c-inop-chip{color:#ef4444;--chip-rgb:239,68,68}
 .c-parcial-chip{color:#f59e0b;--chip-rgb:245,158,11}
@@ -914,6 +923,7 @@ body.nivel-operador  .perm-admin { display:none!important }
       <div class="mlp-section">
         <div class="mlp-title">RISP</div>
         <div class="mlp-risp-grid" id="mlp-risp-filters"></div>
+        <div id="mlp-risp-summary" style="display:none;margin-top:8px"></div>
       </div>
       <div class="mlp-erb-list" id="mlp-erb-list"></div>
     </div>
@@ -2207,10 +2217,11 @@ function gerarPDF(){
         +'<td><span class="days-s '+dc+'">'+d+'d</span></td>'
         +'<td>'+(r.motivo||'\u2014')+'</td>'
         +'<td>'+(r.acao||'\u2014')+'</td>'
-        +'<td>'+(r.inicio||'\u2014')+'</td></tr>';
+        +'<td>'+(r.inicio||'\u2014')+'</td>'
+        +'<td>'+(r.prazo||'\u2014')+'</td></tr>';
     });
     _secInop='<div class="section"><div class="section-title">1. Sites Inoperantes <span class="sec-count">'+inop.length+' total</span></div>'
-      +'<table><thead><tr><th>SBS / Site</th><th>RISP</th><th>Munic\u00edpio</th><th>Dias</th><th>Motivo</th><th>A\u00e7\u00e3o</th><th>In\u00edcio</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+      +'<table><thead><tr><th>SBS / Site</th><th>RISP</th><th>Munic\u00edpio</th><th>Dias</th><th>Motivo</th><th>A\u00e7\u00e3o</th><th>In\u00edcio</th><th>Previs\u00e3o</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
   let _secOutros='';
   if((relTipo==='geral'||relTipo==='problemas')&&(parc.length||modoLocal.length||inst.length)){
@@ -3285,9 +3296,44 @@ function mapBuildRispFilters() {
       mapRefreshMarkers();
       mapBuildList();
       mapUpdateStats();
+      mapUpdateRispSummary();
     });
     el.appendChild(btn);
   });
+}
+
+function mapUpdateRispSummary() {
+  const el = document.getElementById('mlp-risp-summary');
+  if (!el) return;
+  if (mapActiveRisps.size === 0) { el.style.display = 'none'; return; }
+  const rispsAtivas = [...mapActiveRisps].sort((a,b) => parseInt(a.replace('RISP ','')) - parseInt(b.replace('RISP ','')));
+  const todos = getERBData().filter(e => mapActiveRisps.has(e.risp));
+  const total = todos.length;
+  if (!total) { el.style.display = 'none'; return; }
+  const contagem = {};
+  todos.forEach(e => {
+    const s = mapGetStatus(e);
+    contagem[s] = (contagem[s] || 0) + 1;
+  });
+  const ordem = ['inoperante','parcial','instavel','fallback','operando','inativo'];
+  const labels = {operando:'Operando',inoperante:'Inoperante',parcial:'Parcial/Análise',instavel:'Instável',fallback:'Fallback/Local',inativo:'Inativo'};
+  const titulo = rispsAtivas.length === 1
+    ? rispsAtivas[0]
+    : rispsAtivas.length <= 3
+      ? rispsAtivas.join(' + ')
+      : `${rispsAtivas.length} RISPs`;
+  const rows = ordem
+    .filter(s => contagem[s])
+    .map(s => `<div class="mlp-rs-row">
+      <div class="mlp-rs-dot" style="background:${MAP_STATUS_COLORS[s]}"></div>
+      <span class="mlp-rs-lbl">${labels[s]}</span>
+      <span class="mlp-rs-num" style="color:${MAP_STATUS_COLORS[s]}">${contagem[s]}</span>
+    </div>`).join('');
+  el.style.display = 'block';
+  el.innerHTML = `<div class="mlp-risp-summary">
+    <div class="mlp-rs-title">${titulo} <span class="mlp-rs-total">${total} sites</span></div>
+    ${rows}
+  </div>`;
 }
 
 function mapBuildList() {
