@@ -1612,7 +1612,7 @@ function renderRegistros(){
         <td class="td-obs">${truncate(r.motivo,44)}</td>
         <td class="td-obs">${truncate(r.obs,55)}</td>
         <td class="td-obs">${truncate(r.acao,50)}</td>
-        <td><div class="td-mono">${fmtDate(r.inicio)}</div><div style="font-size:9px;color:${dias>30?'var(--red)':dias>7?'#fb923c':'var(--text3)'};font-family:var(--mono)">${dias}d atrás</div>${glpiTag}</td>
+        <td><div class="td-mono">${fmtDate(r.inicio)}</div><div style="font-size:13px;color:${dias>30?'var(--red)':dias>7?'#fb923c':'var(--text3)'};font-family:var(--mono)">${dias}d atrás</div>${glpiTag}</td>
         <td class="td-muted">${r.prazo||'—'}</td>
         <td class="td-muted" style="font-size:10px">${r.operador||'—'}</td>
         <td style="white-space:nowrap">
